@@ -5,12 +5,7 @@ import Card from '../../components/Card.jsx'
 import Badge from '../../components/Badge.jsx'
 import Button from '../../components/Button.jsx'
 import { api } from '../../data/api.js'
-
-const specialtyLabels = {
-  PSYCHOLOGIST: 'Psychologist',
-  CLINICAL_PSYCHOLOGIST: 'Clinical Psychologist',
-  PSYCHIATRIST: 'Psychiatrist',
-}
+import { professionalTypeLabel } from '../../data/professionalTypes.js'
 
 const docTypeLabels = {
   LICENSE: 'Professional license',
@@ -166,7 +161,7 @@ export default function Professionals() {
                       {p.verified ? 'Verified' : 'Pending review'}
                     </Badge>
                   </div>
-                  <p className="text-sm text-ink-500">{specialtyLabels[p.type] ?? p.type}</p>
+                  <p className="text-sm text-ink-500">{professionalTypeLabel(p.type)}</p>
                   <p className="text-xs text-ink-400 mt-1">{p.email}</p>
                 </div>
                 <Button

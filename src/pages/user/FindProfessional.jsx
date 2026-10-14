@@ -5,14 +5,10 @@ import PageHeader from '../../components/PageHeader.jsx'
 import Card from '../../components/Card.jsx'
 import Badge from '../../components/Badge.jsx'
 import { api } from '../../data/api.js'
+import { PROFESSIONAL_TYPE_OPTIONS, PROFESSIONAL_TYPE_LABELS, professionalTypeLabel } from '../../data/professionalTypes.js'
 
-const specialties = ['Any', 'PSYCHOLOGIST', 'CLINICAL_PSYCHOLOGIST', 'PSYCHIATRIST']
-const specialtyLabels = {
-  Any: 'Any',
-  PSYCHOLOGIST: 'Psychologist',
-  CLINICAL_PSYCHOLOGIST: 'Clinical Psychologist',
-  PSYCHIATRIST: 'Psychiatrist',
-}
+const specialties = ['Any', ...PROFESSIONAL_TYPE_OPTIONS.map((o) => o.value)]
+const specialtyLabels = { Any: 'Any', ...PROFESSIONAL_TYPE_LABELS }
 const modes = ['Any', 'Online', 'In-person']
 
 function modeLabel(p) {
@@ -101,7 +97,7 @@ export default function FindProfessional() {
                     <p className="font-semibold text-navy-800">{p.fullName}</p>
                     {p.verified && <Badge tone="teal">Verified</Badge>}
                   </div>
-                  <p className="text-sm text-ink-500 mb-1">{specialtyLabels[p.type] ?? p.type}</p>
+                  <p className="text-sm text-ink-500 mb-1">{professionalTypeLabel(p.type)}</p>
                   <p className="text-xs text-ink-400 mb-2">{p.focusAreas.join(' • ')}</p>
                   <div className="flex items-center gap-4 text-xs text-ink-500">
                     <span className="flex items-center gap-1">

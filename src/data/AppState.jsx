@@ -110,10 +110,15 @@ export function AppStateProvider({ children }) {
     }
   }, [])
 
-  const registerProfessional = useCallback(async (fullName, email, password) => {
+  // type is the professional's chosen profession (COUNSELLOR, PSYCHOLOGIST,
+  // PSYCHIATRIC_NURSE, ...). The backend validates it and defaults to
+  // PSYCHOLOGIST only if none is sent.
+  const registerProfessional = useCallback(async (fullName, email, password, type) => {
     setAuthError(null)
     try {
-      const data = await api.registerProfessional({ fullName, email, password })
+      const payload = { fullName, email, password }
+      if (type) payload.type = type
+      const data = await api.registerProfessional(payload)
       storeSession(data)
       setAuthUser(data.professional)
       setRoleState('professional')

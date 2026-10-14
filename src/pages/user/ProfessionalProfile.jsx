@@ -7,12 +7,7 @@ import Badge from '../../components/Badge.jsx'
 import Button from '../../components/Button.jsx'
 import { api } from '../../data/api.js'
 import { useAppState } from '../../data/AppState.jsx'
-
-const specialtyLabels = {
-  PSYCHOLOGIST: 'Psychologist',
-  CLINICAL_PSYCHOLOGIST: 'Clinical Psychologist',
-  PSYCHIATRIST: 'Psychiatrist',
-}
+import { professionalTypeLabel } from '../../data/professionalTypes.js'
 
 function modeLabel(p) {
   if (p.onlineAvailable && p.inPersonAvailable) return 'Online / In-person'
@@ -86,7 +81,7 @@ export default function ProfessionalProfile() {
       <PageHeader
         eyebrow="Professional profile"
         title={professional.fullName}
-        subtitle={specialtyLabels[professional.type] ?? professional.type}
+        subtitle={professionalTypeLabel(professional.type)}
       />
 
       <div className="p-4 md:p-8 grid lg:grid-cols-3 gap-6 max-w-5xl">

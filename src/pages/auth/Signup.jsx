@@ -3,6 +3,7 @@ import { useNavigate, Link, Navigate } from 'react-router-dom'
 import { User, Stethoscope, ArrowRight, Loader2 } from 'lucide-react'
 import Button from '../../components/Button.jsx'
 import { useAppState } from '../../data/AppState.jsx'
+import { PROFESSIONAL_TYPE_OPTIONS } from '../../data/professionalTypes.js'
 
 // Which portal this build is locked to (see Login.jsx). Unset means local
 // development: both account types can be chosen. The admin portal has no
@@ -15,6 +16,7 @@ export default function Signup() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [professionalType, setProfessionalType] = useState('')
   const [consent, setConsent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const navigate = useNavigate()
@@ -30,7 +32,7 @@ export default function Signup() {
     const ok =
       selected === 'user'
         ? await registerUser(fullName, email, password, consent)
-        : await registerProfessional(fullName, email, password)
+        : await registerProfessional(fullName, email, password, professionalType)
     setSubmitting(false)
     if (ok) navigate(selected === 'user' ? '/app' : '/pro')
   }
@@ -115,6 +117,30 @@ export default function Signup() {
             required
             className="w-full rounded-xl border border-ink-200 px-4 py-3 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
           />
+
+          {selected === 'professional' && (
+            <div>
+              <select
+                value={professionalType}
+                onChange={(e) => setProfessionalType(e.target.value)}
+                required
+                className="w-full rounded-xl border border-ink-200 px-4 py-3 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none bg-white"
+              >
+                <option value="" disabled>
+                  Your profession
+                </option>
+                {PROFESSIONAL_TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-ink-400 mt-1">
+                Choose the profession you are licensed for. Mindora checks this against your licence before you are
+                listed.
+              </p>
+            </div>
+          )}
 
           {selected === 'user' && (
             <label className="flex items-start gap-3 cursor-pointer">

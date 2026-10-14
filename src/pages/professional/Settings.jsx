@@ -6,6 +6,7 @@ import Badge from '../../components/Badge.jsx'
 import Button from '../../components/Button.jsx'
 import { Disclaimer } from '../../components/Disclaimer.jsx'
 import { api } from '../../data/api.js'
+import { PROFESSIONAL_TYPE_OPTIONS } from '../../data/professionalTypes.js'
 
 const docTypes = [
   { value: 'LICENSE', label: 'Professional license' },
@@ -29,6 +30,7 @@ function deletionStatusTone(status) {
 }
 
 const emptyProfileForm = {
+  type: 'PSYCHOLOGIST',
   bio: '',
   qualifications: '',
   focusAreas: '',
@@ -67,6 +69,7 @@ export default function Settings() {
       .then((p) => {
         setProfile(p)
         setProfileForm({
+          type: p.type ?? 'PSYCHOLOGIST',
           bio: p.bio ?? '',
           qualifications: (p.qualifications ?? []).join(', '),
           focusAreas: (p.focusAreas ?? []).join(', '),
@@ -118,6 +121,7 @@ export default function Settings() {
 
     try {
       const payload = {
+        type: profileForm.type,
         bio: profileForm.bio,
         qualifications: profileForm.qualifications
           .split(',')
@@ -234,6 +238,24 @@ export default function Settings() {
 
           {profile && (
             <form onSubmit={handleSaveProfile} className="space-y-3">
+              <div>
+                <label className="text-xs text-ink-500 block mb-1">Profession</label>
+                <select
+                  value={profileForm.type}
+                  onChange={(e) => setProfileForm({ ...profileForm, type: e.target.value })}
+                  className="w-full rounded-xl border border-ink-200 px-4 py-2.5 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none bg-white"
+                >
+                  {PROFESSIONAL_TYPE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-amber-600 mt-1">
+                  Changing this will remove your "Verified" badge until Mindora reviews it again.
+                </p>
+              </div>
+
               <div>
                 <label className="text-xs text-ink-500 block mb-1">Bio</label>
                 <textarea
