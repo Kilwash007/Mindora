@@ -21,6 +21,16 @@ const typeLabels = {
   OTHER: 'Other',
 }
 
+function coverageSummary(inst) {
+  if (inst.sponsoredSessionsPerMember == null) {
+    return `${inst.coveragePercent}% of session fees covered`
+  }
+  const remaining = Math.max(0, inst.sponsoredSessionsPerMember - (inst.sponsoredSessionsUsed ?? 0))
+  const sessionWord = inst.sponsoredSessionsPerMember === 1 ? 'session' : 'sessions'
+  const label = inst.coveragePercent >= 100 ? 'free' : `${inst.coveragePercent}% covered`
+  return `${inst.sponsoredSessionsUsed ?? 0} of ${inst.sponsoredSessionsPerMember} ${label} ${sessionWord} used · ${remaining} remaining`
+}
+
 export default function Settings() {
   const { authUser } = useAppState()
   const [deletionRequest, setDeletionRequest] = useState(undefined) // undefined = loading, null = none
@@ -135,8 +145,8 @@ export default function Settings() {
               <p className="text-sm text-ink-600 mb-4">
                 If your employer or university partners with Mindora, enter the code they shared
                 with you to link your account. This may reduce or fully cover the cost of
-                sessions — your employer never sees which sessions you book, only aggregate usage
-                for billing.
+                sessions — your employer or university never sees which sessions you book, only
+                aggregate usage.
               </p>
               <form onSubmit={handleEnroll} className="flex flex-col sm:flex-row gap-2">
                 <input
@@ -163,8 +173,7 @@ export default function Settings() {
                   {enrollSuccess && <Check className="h-4 w-4 text-teal-600" />}
                 </div>
                 <p className="text-xs text-ink-500">
-                  {typeLabels[myInstitution.type] ?? myInstitution.type} •{' '}
-                  {myInstitution.coveragePercent}% of session fees covered
+                  {typeLabels[myInstitution.type] ?? myInstitution.type} • {coverageSummary(myInstitution)}
                 </p>
               </div>
             </div>

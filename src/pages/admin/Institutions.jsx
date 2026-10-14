@@ -20,7 +20,23 @@ function statusTone(status) {
   return 'elevated' // PENDING
 }
 
-const emptyForm = { name: '', type: 'EMPLOYER', contactName: '', contactEmail: '', notes: '', coveragePercent: 0 }
+// Blank means "no limit" and is sent to the backend as null.
+function toLimit(value) {
+  if (value === '' || value === null || value === undefined) return null
+  const n = Number(value)
+  return Number.isInteger(n) && n >= 1 ? n : null
+}
+
+const emptyForm = {
+  name: '',
+  type: 'EMPLOYER',
+  contactName: '',
+  contactEmail: '',
+  notes: '',
+  coveragePercent: 0,
+  memberLimit: '',
+  sponsoredSessionsPerMember: '',
+}
 
 export default function Institutions() {
   const [institutions, setInstitutions] = useState(null)
@@ -44,7 +60,11 @@ export default function Institutions() {
     setSubmitting(true)
     setError(null)
     try {
-      const payload = { ...form }
+      const payload = {
+        ...form,
+        memberLimit: toLimit(form.memberLimit),
+        sponsoredSessionsPerMember: toLimit(form.sponsoredSessionsPerMember),
+      }
       if (!payload.contactEmail) delete payload.contactEmail
       if (!payload.contactName) delete payload.contactName
       if (!payload.notes) delete payload.notes
@@ -58,22 +78,16 @@ export default function Institutions() {
     }
   }
 
-  const handleStatusChange = async (id, status) => {
+  const handleUpdate = async (id, data) => {
     setUpdatingId(id)
+    setError(null)
     try {
-      await api.adminUpdateInstitution(id, { status })
-      load()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setUpdatingId(null)
-    }
-  }
-
-  const handleCoverageChange = async (id, coveragePercent) => {
-    setUpdatingId(id)
-    try {
-      await api.adminUpdateInstitution(id, { coveragePercent })
+      await api.adminUpdateInstitution(id, data)
+      setStatsById((prev) => {
+        const next = { ...prev }
+        delete next[id]
+        return next
+      })
       load()
     } catch (err) {
       setError(err.message)
@@ -105,7 +119,7 @@ export default function Institutions() {
       <PageHeader
         eyebrow="Institutions"
         title="Institutional partners"
-        subtitle="Coverage percent determines how much of a professional's fee this institution pays for its linked members. Stats are always aggregate — Mindora never shows which specific patients used the benefit, matching how real Employee Assistance Programs guarantee anonymity."
+        subtitle="Coverage percent determines how much of a professional's fee this institution pays for its linked members. Optional limits cap how many people can join and how many sessions each person gets covered. Stats are always aggregate — Mindora never shows which specific patients used the benefit."
       />
 
       <div className="p-8 space-y-6 max-w-4xl">
@@ -132,7 +146,7 @@ export default function Institutions() {
             </select>
             <div>
               <label className="text-xs text-ink-500 block mb-1">
-                Coverage % (0 = no coverage, 100 = fully sponsored / EAP)
+                Coverage % (0 = no coverage, 100 = fully sponsored)
               </label>
               <input
                 type="number"
@@ -140,6 +154,30 @@ export default function Institutions() {
                 max={100}
                 value={form.coveragePercent}
                 onChange={(e) => setForm({ ...form, coveragePercent: Number(e.target.value) })}
+                className="w-full rounded-xl border border-ink-200 px-4 py-2.5 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-ink-500 block mb-1">Member limit (blank = unlimited)</label>
+              <input
+                type="number"
+                min={1}
+                value={form.memberLimit}
+                onChange={(e) => setForm({ ...form, memberLimit: e.target.value })}
+                placeholder="e.g. 50"
+                className="w-full rounded-xl border border-ink-200 px-4 py-2.5 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-ink-500 block mb-1">
+                Covered sessions per member (blank = unlimited)
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={form.sponsoredSessionsPerMember}
+                onChange={(e) => setForm({ ...form, sponsoredSessionsPerMember: e.target.value })}
+                placeholder="e.g. 2"
                 className="w-full rounded-xl border border-ink-200 px-4 py-2.5 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
               />
             </div>
@@ -200,7 +238,7 @@ export default function Institutions() {
                   {inst.status !== 'ACTIVE' && (
                     <Button
                       variant="secondary"
-                      onClick={() => handleStatusChange(inst.id, 'ACTIVE')}
+                      onClick={() => handleUpdate(inst.id, { status: 'ACTIVE' })}
                       disabled={updatingId === inst.id}
                     >
                       Activate
@@ -210,7 +248,7 @@ export default function Institutions() {
                     <Button
                       variant="ghost"
                       className="text-ink-500"
-                      onClick={() => handleStatusChange(inst.id, 'INACTIVE')}
+                      onClick={() => handleUpdate(inst.id, { status: 'INACTIVE' })}
                       disabled={updatingId === inst.id}
                     >
                       Deactivate
@@ -230,7 +268,7 @@ export default function Institutions() {
                       defaultValue={inst.coveragePercent}
                       onBlur={(e) => {
                         const val = Number(e.target.value)
-                        if (val !== inst.coveragePercent) handleCoverageChange(inst.id, val)
+                        if (val !== inst.coveragePercent) handleUpdate(inst.id, { coveragePercent: val })
                       }}
                       className="w-24 rounded-lg border border-ink-200 px-3 py-1.5 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
                     />
@@ -253,6 +291,44 @@ export default function Institutions() {
                     </button>
                   </div>
                 </div>
+
+                <div>
+                  <label className="text-xs text-ink-500 block mb-1">Member limit</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      defaultValue={inst.memberLimit ?? ''}
+                      placeholder="Unlimited"
+                      onBlur={(e) => {
+                        const val = toLimit(e.target.value)
+                        if (val !== (inst.memberLimit ?? null)) handleUpdate(inst.id, { memberLimit: val })
+                      }}
+                      className="w-24 rounded-lg border border-ink-200 px-3 py-1.5 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
+                    />
+                    <span className="text-xs text-ink-400">people who can join</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs text-ink-500 block mb-1">Covered sessions per member</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      defaultValue={inst.sponsoredSessionsPerMember ?? ''}
+                      placeholder="Unlimited"
+                      onBlur={(e) => {
+                        const val = toLimit(e.target.value)
+                        if (val !== (inst.sponsoredSessionsPerMember ?? null)) {
+                          handleUpdate(inst.id, { sponsoredSessionsPerMember: val })
+                        }
+                      }}
+                      className="w-24 rounded-lg border border-ink-200 px-3 py-1.5 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
+                    />
+                    <span className="text-xs text-ink-400">sessions each</span>
+                  </div>
+                </div>
               </div>
 
               <div className="pt-3 mt-3 border-t border-ink-100">
@@ -269,8 +345,17 @@ export default function Institutions() {
                   <div className="flex flex-wrap gap-6 text-sm">
                     <div>
                       <p className="text-xs text-ink-500">Linked members</p>
-                      <p className="font-semibold text-navy-800">{statsById[inst.id].memberCount}</p>
+                      <p className="font-semibold text-navy-800">
+                        {statsById[inst.id].memberCount}
+                        {statsById[inst.id].memberLimit != null && ` / ${statsById[inst.id].memberLimit}`}
+                      </p>
                     </div>
+                    {statsById[inst.id].placesRemaining != null && (
+                      <div>
+                        <p className="text-xs text-ink-500">Places remaining</p>
+                        <p className="font-semibold text-navy-800">{statsById[inst.id].placesRemaining}</p>
+                      </div>
+                    )}
                     <div>
                       <p className="text-xs text-ink-500">Sponsored appointments</p>
                       <p className="font-semibold text-navy-800">{statsById[inst.id].sponsoredAppointmentCount}</p>
