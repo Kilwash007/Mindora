@@ -39,6 +39,7 @@ import Earnings from './pages/professional/Earnings.jsx'
 import ProAssessments from './pages/professional/Assessments.jsx'
 import FollowUps from './pages/professional/FollowUps.jsx'
 import Reports from './pages/professional/Reports.jsx'
+import ClinicalResources from './pages/professional/ClinicalResources.jsx'
 import ProSettings from './pages/professional/Settings.jsx'
 
 // Admin portal
@@ -98,6 +99,7 @@ export default function App() {
         <Route path="assessments" element={<ProAssessments />} />
         <Route path="follow-ups" element={<FollowUps />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="resources" element={<ClinicalResources />} />
         <Route path="settings" element={<ProSettings />} />
       </Route>
 

@@ -11,6 +11,7 @@ import {
   MessageCircle,
   UsersRound,
   Wallet,
+  BookOpen,
   Settings,
   Loader2,
 } from 'lucide-react'
@@ -30,6 +31,7 @@ const items = [
   { to: '/pro/assessments', label: 'Assessments', icon: ClipboardList },
   { to: '/pro/follow-ups', label: 'Follow-ups', icon: Repeat },
   { to: '/pro/reports', label: 'Reports', icon: BarChart3 },
+  { to: '/pro/resources', label: 'Clinical resources', icon: BookOpen },
   { to: '/pro/settings', label: 'Settings', icon: Settings },
 ]
 
