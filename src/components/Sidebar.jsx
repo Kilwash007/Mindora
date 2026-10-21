@@ -8,7 +8,7 @@ export default function Sidebar({ items, roleLabel, roleName }) {
   const { setRole } = useAppState()
   const [open, setOpen] = useState(false)
 
-  const handleSwitch = () => {
+  const handleSignOut = () => {
     setRole(null)
     navigate('/')
   }
@@ -26,6 +26,7 @@ export default function Sidebar({ items, roleLabel, roleName }) {
           <span className="font-display font-bold text-lg tracking-tight">Mindora</span>
         </div>
         <button
+          type="button"
           onClick={() => setOpen(true)}
           aria-label="Open menu"
           className="p-2 rounded-lg hover:bg-white/10"
@@ -39,7 +40,7 @@ export default function Sidebar({ items, roleLabel, roleName }) {
         <div onClick={closeDrawer} className="md:hidden fixed inset-0 bg-black/40 z-40" />
       )}
 
-      {/* Sidebar — a slide-out drawer on mobile, the original static sidebar on md+ */}
+      {/* Sidebar — a slide-out drawer on mobile, a static sidebar on md+ */}
       <aside
         className={`fixed md:sticky top-0 left-0 z-50 h-screen w-64 shrink-0 bg-navy-800 text-white flex flex-col transition-transform duration-200 ${
           open ? 'translate-x-0' : '-translate-x-full'
@@ -56,6 +57,7 @@ export default function Sidebar({ items, roleLabel, roleName }) {
             <p className="text-[11px] text-navy-200 mt-1 uppercase tracking-wide">{roleLabel}</p>
           </div>
           <button
+            type="button"
             onClick={closeDrawer}
             aria-label="Close menu"
             className="md:hidden p-1.5 rounded-lg hover:bg-white/10"
@@ -64,7 +66,7 @@ export default function Sidebar({ items, roleLabel, roleName }) {
           </button>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+        <nav aria-label="Main" className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
           {items.map((item) => (
             <NavLink
               key={item.to}
@@ -88,14 +90,14 @@ export default function Sidebar({ items, roleLabel, roleName }) {
         <div className="px-3 py-4 border-t border-white/10">
           <div className="px-3 pb-3">
             <p className="text-sm font-semibold">{roleName}</p>
-            <p className="text-xs text-navy-300">Mindora demo account</p>
           </div>
           <button
-            onClick={handleSwitch}
+            type="button"
+            onClick={handleSignOut}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-navy-200 hover:bg-white/5 hover:text-white transition-colors"
           >
             <LogOut className="h-4 w-4" />
-            Switch role / log out
+            Sign out
           </button>
         </div>
       </aside>
