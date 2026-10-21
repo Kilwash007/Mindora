@@ -18,10 +18,11 @@ h1, h2, h3, h4 {
   @apply bg-teal-200 text-navy-900;
 }
 
-/* Visible keyboard focus */
+/* Visible keyboard focus: navy ring with an amber halo, visible on light and dark */
 :focus-visible {
-  outline: 2px solid #3fbea3;
+  outline: 2px solid #1a365d;
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px #e2a970;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -36,6 +37,6 @@ h1, h2, h3, h4 {
   width: 6px;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #d7e0ee;
+  background: #c4d8d6;
   border-radius: 999px;
 }

@@ -6,24 +6,34 @@ import { useAppState } from '../../data/AppState.jsx'
 
 // Which portal this build is locked to. Set VITE_PORTAL to 'user',
 // 'professional', or 'admin' on each hosted site. When it is unset (local
-// development), all three tabs show and behaviour is unchanged.
+// development), all three tabs show.
 const VALID_PORTALS = ['user', 'professional', 'admin']
 const PORTAL = VALID_PORTALS.includes(import.meta.env.VITE_PORTAL) ? import.meta.env.VITE_PORTAL : null
 
 // Staging only: shows a notice on the code screen that no email is sent
 // and the code is 000000. Set VITE_TEST_CODE=true to turn it on.
+// Must stay OFF on every live site.
 const SHOW_TEST_CODE = import.meta.env.VITE_TEST_CODE === 'true'
 
 const HEADINGS = {
-  user: { title: 'Welcome back', subtitle: 'Log in to continue your wellbeing journey.' },
-  professional: { title: 'Professional login', subtitle: 'Log in to manage your referrals and clients.' },
-  admin: { title: 'Admin login', subtitle: 'Authorised staff only.' },
+  user: { title: 'Welcome back', subtitle: 'Sign in to continue your wellbeing journey.' },
+  professional: { title: 'Professional sign in', subtitle: 'Sign in to manage your referrals and clients.' },
+  admin: { title: 'Admin sign in', subtitle: 'Authorised staff only.' },
 }
+
+const AUDIENCES = [
+  { id: 'user', label: 'User', Icon: User },
+  { id: 'professional', label: 'Professional', Icon: Stethoscope },
+  { id: 'admin', label: 'Admin', Icon: ShieldCheck },
+]
+
+const INPUT_CLASS =
+  'w-full rounded-xl border border-ink-200 px-4 py-3 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none'
 
 export default function Login() {
   const [audience, setAudience] = useState(PORTAL || 'user') // 'user' | 'professional' | 'admin'
-  const [email, setEmail] = useState(PORTAL ? '' : 'kilwanda.josh@roadrimz.com')
-  const [password, setPassword] = useState(PORTAL ? '' : 'demo-password')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [otpCode, setOtpCode] = useState('')
@@ -31,19 +41,15 @@ export default function Login() {
   const navigate = useNavigate()
   const { requestLogin, verifyOtp, cancelOtp, otpPending, authError } = useAppState()
 
-  const heading = HEADINGS[PORTAL || 'user']
-
-  const handleAudienceChange = (next) => {
-    setAudience(next)
-  }
+  const heading = HEADINGS[PORTAL || audience] || HEADINGS.user
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setSubmitting(true)
-    await requestLogin(audience, email, password)
+    await requestLogin(audience, email.trim(), password)
     setSubmitting(false)
-    // On success, otpPending gets set by AppState and the OTP screen below
-    // renders automatically — no navigation happens yet at this step.
+    // On success, otpPending gets set by AppState and the code screen below
+    // renders automatically. No navigation happens at this step.
   }
 
   const handleVerify = async (e) => {
@@ -58,7 +64,7 @@ export default function Login() {
     }
   }
 
-  // --- OTP entry screen ---
+  // --- Code entry screen ---
   if (otpPending) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-mindora-soft p-6">
@@ -78,9 +84,14 @@ export default function Login() {
           )}
 
           <form onSubmit={handleVerify} className="space-y-4">
+            <label htmlFor="otp-code" className="sr-only">
+              6-digit code
+            </label>
             <input
+              id="otp-code"
               type="text"
               inputMode="numeric"
+              autoComplete="one-time-code"
               maxLength={6}
               placeholder="000000"
               value={otpCode}
@@ -88,36 +99,41 @@ export default function Login() {
               className="w-full rounded-xl border border-ink-200 px-4 py-3 text-center text-2xl tracking-[0.5em] font-semibold focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
               autoFocus
             />
-            {authError && <p className="text-sm text-red-600 text-center">{authError}</p>}
+            {authError && (
+              <p role="alert" className="text-sm text-red-600 text-center">
+                {authError}
+              </p>
+            )}
             <Button
               type="submit"
               variant="accent"
               className="w-full"
               disabled={verifying || otpCode.length !== 6}
             >
-              {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify and log in'}
+              {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify and sign in'}
             </Button>
           </form>
 
           <button
+            type="button"
             onClick={() => {
               cancelOtp()
               setOtpCode('')
             }}
             className="w-full text-center text-sm text-ink-400 hover:text-navy-600 mt-6"
           >
-            ← Back to login
+            ← Back to sign in
           </button>
 
           <p className="text-xs text-ink-400 mt-4 text-center">
-            Code expires in 10 minutes. Going back and logging in again will send a new one.
+            The code expires in 10 minutes. Going back and signing in again will send a new one.
           </p>
         </div>
       </div>
     )
   }
 
-  // --- Email/password screen ---
+  // --- Email and password screen ---
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-white">
       <div className="hidden lg:flex flex-col justify-between bg-mindora-gradient text-white p-12 relative overflow-hidden">
@@ -133,12 +149,10 @@ export default function Login() {
         </div>
 
         <div className="relative max-w-md">
-          <h1 className="text-4xl font-display font-bold leading-tight mb-4">
-            Mental health before crisis.
-          </h1>
+          <h1 className="text-4xl font-display font-bold leading-tight mb-4">Mental health before crisis.</h1>
           <p className="text-navy-100 text-lg leading-relaxed">
-            Understand your mental wellbeing. Identify potential risks early. Get connected to
-            the right support.
+            Understand your mental wellbeing. Identify potential risks early. Get connected to the right
+            support.
           </p>
         </div>
 
@@ -161,52 +175,57 @@ export default function Login() {
           <p className="text-ink-500 mb-6 text-sm">{heading.subtitle}</p>
 
           {!PORTAL && (
-            <div className="grid grid-cols-3 gap-1 rounded-xl border border-ink-200 p-1 mb-6 bg-ink-50">
-              <button
-                onClick={() => handleAudienceChange('user')}
-                className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg text-xs font-semibold transition-colors ${
-                  audience === 'user' ? 'bg-white shadow-soft text-navy-800' : 'text-ink-500'
-                }`}
-              >
-                <User className="h-4 w-4" /> User
-              </button>
-              <button
-                onClick={() => handleAudienceChange('professional')}
-                className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg text-xs font-semibold transition-colors ${
-                  audience === 'professional' ? 'bg-white shadow-soft text-navy-800' : 'text-ink-500'
-                }`}
-              >
-                <Stethoscope className="h-4 w-4" /> Professional
-              </button>
-              <button
-                onClick={() => handleAudienceChange('admin')}
-                className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg text-xs font-semibold transition-colors ${
-                  audience === 'admin' ? 'bg-white shadow-soft text-navy-800' : 'text-ink-500'
-                }`}
-              >
-                <ShieldCheck className="h-4 w-4" /> Admin
-              </button>
+            <div
+              role="tablist"
+              aria-label="Account type"
+              className="grid grid-cols-3 gap-1 rounded-xl border border-ink-200 p-1 mb-6 bg-ink-50"
+            >
+              {AUDIENCES.map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={audience === id}
+                  onClick={() => setAudience(id)}
+                  className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg text-xs font-semibold transition-colors ${
+                    audience === id ? 'bg-white shadow-soft text-navy-800' : 'text-ink-500'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" /> {label}
+                </button>
+              ))}
             </div>
           )}
 
           <form className="space-y-4" onSubmit={handleLogin}>
             <div>
-              <label className="text-sm font-medium text-navy-700 mb-1 block">Email</label>
+              <label htmlFor="login-email" className="text-sm font-medium text-navy-700 mb-1 block">
+                Email
+              </label>
               <input
+                id="login-email"
                 type="email"
+                autoComplete="email"
+                required
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-ink-200 px-4 py-3 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
+                className={INPUT_CLASS}
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-navy-700 mb-1 block">Password</label>
+              <label htmlFor="login-password" className="text-sm font-medium text-navy-700 mb-1 block">
+                Password
+              </label>
               <div className="relative">
                 <input
+                  id="login-password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-ink-200 px-4 py-3 pr-11 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
+                  className={`${INPUT_CLASS} pr-11`}
                 />
                 <button
                   type="button"
@@ -218,19 +237,16 @@ export default function Login() {
                 </button>
               </div>
             </div>
-            {authError && <p className="text-sm text-red-600">{authError}</p>}
+            {authError && (
+              <p role="alert" className="text-sm text-red-600">
+                {authError}
+              </p>
+            )}
             <Button type="submit" variant="accent" className="w-full" disabled={submitting}>
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Log in'}
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign in'}
             </Button>
+            <p className="text-xs text-ink-400 text-center">We'll email you a 6-digit code to finish signing in.</p>
           </form>
-
-          {!PORTAL && (
-            <p className="text-xs text-ink-400 mt-3">
-              All demo accounts now use{' '}
-              <span className="font-mono">kilwanda.josh@roadrimz.com</span> (except safety@/support@mindora.local) —
-              password: <span className="font-mono">demo-password</span>. A login code will be emailed on submit.
-            </p>
-          )}
 
           {PORTAL !== 'admin' && (
             <>
@@ -240,7 +256,7 @@ export default function Login() {
                 <div className="h-px bg-ink-100 flex-1" />
               </div>
 
-              <Button variant="secondary" className="w-full" onClick={() => navigate('/signup')}>
+              <Button type="button" variant="secondary" className="w-full" onClick={() => navigate('/signup')}>
                 Create account
               </Button>
             </>
