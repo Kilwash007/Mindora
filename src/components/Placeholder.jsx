@@ -13,8 +13,7 @@ export default function Placeholder({ title, eyebrow, description, icon: Icon })
             </div>
           )}
           <p className="text-ink-500 text-sm max-w-sm mx-auto">
-            {description ||
-              'This section is scoped for the full MVP build. The investor-demo prototype focuses on the core screening → referral → follow-up journey.'}
+            {description || 'This section is coming soon. We are building it step by step.'}
           </p>
         </Card>
       </div>
