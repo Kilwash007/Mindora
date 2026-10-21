@@ -219,9 +219,16 @@ export default function Login() {
         />
       </div>
       <div>
-        <label htmlFor="login-password" className="text-sm font-semibold text-navy-800 mb-1.5 block">
-          Password
-        </label>
+        <div className="mb-1.5 flex items-center justify-between">
+          <label htmlFor="login-password" className="text-sm font-semibold text-navy-800">
+            Password
+          </label>
+          {portal !== 'admin' && (
+            <Link to="/forgot-password" className="text-xs font-semibold text-navy-800 underline">
+              Forgot password?
+            </Link>
+          )}
+        </div>
         <div className="relative">
           <input
             id="login-password"
@@ -255,6 +262,11 @@ export default function Login() {
         {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continue'}
       </button>
       <p className="text-xs text-ink-500 text-center">We'll email you a 6-digit code to finish signing in.</p>
+      {portal === 'admin' && (
+        <p className="text-xs text-ink-500 text-center">
+          Forgot your password? Ask another platform admin to reset it.
+        </p>
+      )}
     </form>
   )
 

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 // Auth
 import Login from './pages/auth/Login.jsx'
 import Signup from './pages/auth/Signup.jsx'
+import ForgotPassword from './pages/auth/ForgotPassword.jsx'
 
 // Layouts
 import UserLayout from './layouts/UserLayout.jsx'
@@ -64,6 +65,7 @@ export default function App() {
       {/* Auth */}
       <Route path="/" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
       {/* User portal */}
       <Route path="/app" element={<RequireAuth><UserLayout /></RequireAuth>}>

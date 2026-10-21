@@ -9,6 +9,10 @@ import { api } from '../../data/api.js'
 const JOIN_OPENS_BEFORE_MS = 10 * 60 * 1000
 const JOIN_CLOSES_AFTER_MS = 60 * 60 * 1000
 
+// A referral is "waiting" until the professional has accepted it. Escalated
+// and closed referrals are no longer waiting on this professional.
+const WAITING_STATUSES = ['PENDING', 'MORE_INFO_REQUESTED']
+
 function greetingFor(date) {
   const h = date.getHours()
   if (h < 12) return 'Good morning'
@@ -143,7 +147,7 @@ export default function ProfessionalDashboard() {
   ).length
 
   // --- Referrals waiting for a response ---
-  const waiting = (referrals.data ?? []).filter((r) => !['ACCEPTED', 'CLOSED'].includes(r.status))
+  const waiting = (referrals.data ?? []).filter((r) => WAITING_STATUSES.includes(r.status))
   const dated = waiting.filter((r) => r.createdAt)
   const oldest = dated.length > 0 ? dated.reduce((a, b) => (new Date(a.createdAt) < new Date(b.createdAt) ? a : b)) : null
 
