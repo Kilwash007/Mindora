@@ -119,7 +119,7 @@ export default function StudentRate() {
                   method === 'YOUNG_ADULT_ID' ? 'border-teal-400 bg-teal-50 text-navy-800' : 'border-ink-200 text-ink-600'
                 }`}
               >
-                <CreditCard className="h-5 w-5" /> ID (age 18–25)
+                <CreditCard className="h-5 w-5" /> Student ID or other ID
               </button>
             </div>
 

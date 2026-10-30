@@ -226,6 +226,22 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {institution.data?.requiresStudentProof && institution.data.proofStatus !== 'APPROVED' && (
+        <Card className="border-amber-200 bg-amber-50/60">
+          <p className="text-sm text-amber-900">
+            <strong>{institution.data.name}</strong>{' '}
+            {institution.data.proofStatus === 'PENDING'
+              ? 'is reviewing your proof that you are a student. Your free triage and covered sessions start once it is approved.'
+              : institution.data.proofStatus === 'REJECTED'
+                ? 'could not approve your last proof. Please send another to unlock your free triage and covered sessions.'
+                : 'offers free care to students. Add proof that you are one to unlock your free triage and covered sessions.'}{' '}
+            <Link to="/app/welcome" className="font-semibold underline">
+              {institution.data.proofStatus === 'PENDING' ? 'See its status' : 'Add your proof'}
+            </Link>
+          </p>
+        </Card>
+      )}
+
       {/* Row 1: the next step in care, and the next session */}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="relative overflow-hidden rounded-3xl bg-navy-800 p-7 text-white shadow-lift lg:col-span-2">

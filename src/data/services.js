@@ -107,19 +107,25 @@ export function usePrices() {
   return { prices, error, priceOf }
 }
 
-// The name of the institution covering this person's triage, or null. Shown
-// as "free, covered by ..." in place of the price. The server decides who is
-// actually covered; this only changes the wording.
+// How this person's triage is covered, for wording only; the server decides
+// who is actually covered.
+//   coveredBy   - the programme paying for it, shown as "free, covered by ..."
+//   proofNeeded - set when the programme would cover it but is waiting for the
+//                 person's proof of being a student: { programme, status }
+//                 where status is NONE, PENDING or REJECTED
 export function useTriageCover() {
-  const [name, setName] = useState(null)
+  const [cover, setCover] = useState({ coveredBy: null, proofNeeded: null })
 
   useEffect(() => {
     let cancelled = false
     api
       .getMyInstitution()
       .then((inst) => {
-        if (!cancelled && inst && inst.status === 'ACTIVE' && inst.coversTriage && !inst.triageCoveredUsed) {
-          setName(inst.name)
+        if (cancelled || !inst || inst.status !== 'ACTIVE' || !inst.coversTriage || inst.triageCoveredUsed) return
+        if (inst.requiresStudentProof && inst.proofStatus !== 'APPROVED') {
+          setCover({ coveredBy: null, proofNeeded: { programme: inst.name, status: inst.proofStatus ?? 'NONE' } })
+        } else {
+          setCover({ coveredBy: inst.name, proofNeeded: null })
         }
       })
       .catch(() => {})
@@ -128,5 +134,5 @@ export function useTriageCover() {
     }
   }, [])
 
-  return name
+  return cover
 }

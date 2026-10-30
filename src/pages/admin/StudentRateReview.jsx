@@ -43,6 +43,7 @@ function VerificationRow({ v, onReviewed }) {
         <div>
           <p className="font-semibold text-navy-800">{v.userFullName}</p>
           <p className="text-xs text-ink-400">{v.userEmail} · {formatDate(v.createdAt)}</p>
+          {v.institutionName && <p className="text-xs text-teal-700 mt-0.5">Signed up with: {v.institutionName}</p>}
         </div>
         <Badge tone="navy">
           {v.method === 'STUDENT_EMAIL' ? (
@@ -60,7 +61,7 @@ function VerificationRow({ v, onReviewed }) {
           onClick={downloadFile}
           className="flex items-center gap-1.5 text-sm text-teal-600 font-semibold mb-3"
         >
-          <Download className="h-3.5 w-3.5" /> View uploaded ID
+          <Download className="h-3.5 w-3.5" /> View uploaded document
         </button>
       )}
 
@@ -104,7 +105,7 @@ export default function StudentRateReview() {
 
   return (
     <div>
-      <PageHeader eyebrow="Student Rate" title="Student Rate verification" subtitle="Review university-email and ID submissions." />
+      <PageHeader eyebrow="Student Rate" title="Student Rate verification" subtitle="Review school-email and ID submissions. Approving one also unlocks any programme cover that asks for proof." />
 
       <div className="p-4 md:p-8 max-w-2xl space-y-6">
         {error && <Card className="text-sm text-red-600">{error}</Card>}

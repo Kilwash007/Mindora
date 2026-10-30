@@ -96,14 +96,23 @@ export function AppStateProvider({ children }) {
 
   // consent must be `true` — the backend rejects anything else (missing,
   // false) with a clear error, which surfaces via authError below.
-  const registerUser = useCallback(async (fullName, email, password, consent) => {
+  // enrollmentCode is an optional pilot, promo or university code. On success
+  // this returns { institution }: the programme the account was linked to, null
+  // when no code was given, or undefined when an older server ignored the code.
+  const registerUser = useCallback(async (fullName, email, password, consent, enrollmentCode) => {
     setAuthError(null)
     try {
-      const data = await api.registerUser({ fullName, email, password, consent })
+      const data = await api.registerUser({
+        fullName,
+        email,
+        password,
+        consent,
+        ...(enrollmentCode ? { enrollmentCode } : {}),
+      })
       storeSession(data)
       setAuthUser(data.user)
       setRoleState('user')
-      return true
+      return { institution: data.institution }
     } catch (err) {
       setAuthError(err.message)
       return false

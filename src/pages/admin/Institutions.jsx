@@ -37,6 +37,7 @@ const emptyForm = {
   memberLimit: '',
   sponsoredSessionsPerMember: '',
   coversTriage: false,
+  requiresStudentProof: false,
 }
 
 export default function Institutions() {
@@ -189,6 +190,14 @@ export default function Institutions() {
                 onChange={(e) => setForm({ ...form, coversTriage: e.target.checked })}
               />
               Also covers each member's first triage (KES 500, paid by Mindora)
+            </label>
+            <label className="flex items-center gap-2 text-sm text-ink-600 md:col-span-2">
+              <input
+                type="checkbox"
+                checked={form.requiresStudentProof}
+                onChange={(e) => setForm({ ...form, requiresStudentProof: e.target.checked })}
+              />
+              Members must send proof that they are students (you approve it) before any cover or student price applies
             </label>
             <input
               placeholder="Contact name (optional)"
@@ -349,6 +358,15 @@ export default function Institutions() {
                       disabled={updatingId === inst.id}
                     />
                     Covers each member's first triage
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-ink-600 mt-2">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(inst.requiresStudentProof)}
+                      onChange={(e) => handleUpdate(inst.id, { requiresStudentProof: e.target.checked })}
+                      disabled={updatingId === inst.id}
+                    />
+                    Requires proof of being a student
                   </label>
                 </div>
               </div>

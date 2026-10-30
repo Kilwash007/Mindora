@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { AlertTriangle, AlertOctagon, CheckCircle2, ShieldAlert, Loader2 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader.jsx'
 import Card from '../../components/Card.jsx'
@@ -73,7 +73,7 @@ export default function AssessmentResult() {
 // The next step for everyone except an ACUTE result: a paid triage.
 function TriageStep({ result, triagePrice, intro, variant = 'accent', extra }) {
   const until = formatDay(result.validUntil)
-  const coveredBy = useTriageCover()
+  const { coveredBy, proofNeeded } = useTriageCover()
   return (
     <Card>
       <h3 className="font-semibold text-navy-800 mb-2">Recommended next step</h3>
@@ -91,6 +91,20 @@ function TriageStep({ result, triagePrice, intro, variant = 'accent', extra }) {
             : 'The triage fee is credited to your first session.'}
         </p>
       </div>
+      {proofNeeded && (
+        <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900 mb-4">
+          {proofNeeded.programme} gives you a free triage once we have approved your proof that you are a student.{' '}
+          {proofNeeded.status === 'PENDING'
+            ? 'Yours is under review.'
+            : proofNeeded.status === 'REJECTED'
+              ? 'Your last proof was not approved, so please send another.'
+              : 'You have not sent it yet.'}{' '}
+          <Link to="/app/welcome" className="font-semibold underline">
+            {proofNeeded.status === 'PENDING' ? 'See its status' : 'Add your proof'}
+          </Link>
+          . Or pay for your triage now.
+        </div>
+      )}
       <div className="flex flex-wrap gap-3">
         <Button as="link" to={`/app/triage/new/${result.id}`} variant={variant}>
           {coveredBy ? 'Start my free triage' : `Book triage${triagePrice != null ? ` — ${formatKes(triagePrice)}` : ''}`}

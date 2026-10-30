@@ -26,6 +26,7 @@ import Groups from './pages/user/Groups.jsx'
 import GroupDetail from './pages/user/GroupDetail.jsx'
 import StudentRate from './pages/user/StudentRate.jsx'
 import TriageList from './pages/user/TriageList.jsx'
+import Welcome from './pages/user/Welcome.jsx'
 import TriageStart from './pages/user/TriageStart.jsx'
 import Triage from './pages/user/Triage.jsx'
 import UserSettings from './pages/user/Settings.jsx'
@@ -79,6 +80,7 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="check-in" element={<CheckIn />} />
         <Route path="check-in/result" element={<AssessmentResult />} />
+        <Route path="welcome" element={<Welcome />} />
         <Route path="triage" element={<TriageList />} />
         <Route path="triage/new/:checkInId" element={<TriageStart />} />
         <Route path="triage/:id" element={<Triage />} />

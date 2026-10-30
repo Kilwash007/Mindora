@@ -80,20 +80,31 @@ export default function Signup() {
     setSubmitting(true)
     const name = fullName.trim()
     const mail = email.trim()
-    const ok = isPro
+    const code = orgCode.trim()
+    const result = isPro
       ? await registerProfessional(name, mail, password, professionalType)
-      : await registerUser(name, mail, password, consent)
-    if (!ok) {
+      : await registerUser(name, mail, password, consent, code)
+    // A wrong or full code stops the sign-up with a message (shown below), and
+    // no account is made, so it can be corrected or left blank.
+    if (!result) {
       setSubmitting(false)
       return
     }
 
-    // Patients can link a university or company code right away. The account
-    // already exists at this point, so a bad code never blocks sign-up.
-    const code = orgCode.trim()
-    if (!isPro && code) {
+    if (isPro) {
+      setSubmitting(false)
+      navigate('/pro')
+      return
+    }
+
+    // The code now goes in with the sign-up. If the server did not answer with
+    // a programme at all (an older server that ignores the code), link it now
+    // the old way, so a code is never silently dropped.
+    let institution = result.institution
+    if (code && institution === undefined) {
       try {
         await api.enrollInInstitution(code)
+        institution = null
       } catch (err) {
         setSubmitting(false)
         setNotice(
@@ -104,7 +115,8 @@ export default function Signup() {
     }
 
     setSubmitting(false)
-    navigate(isPro ? '/pro' : '/app')
+    // A programme that asks for proof of being a student gets a short extra step.
+    navigate(institution?.requiresStudentProof ? '/app/welcome' : '/app')
   }
 
   // Shown only when the account was created but the optional code failed.
@@ -166,8 +178,8 @@ export default function Signup() {
                 Apply to join Mindora.
               </h1>
               <p className="mt-5 text-lg leading-relaxed text-navy-100">
-                See clients online, set your own fee and availability, and get paid by M-Pesa. Our team reviews every
-                application before a profile goes live.
+                See clients online, set your own availability, and get paid by M-Pesa. Session prices are fixed by
+                Mindora. Our team reviews every application before a profile goes live.
               </p>
             </>
           ) : (
@@ -335,16 +347,21 @@ export default function Signup() {
               <>
                 <div>
                   <label htmlFor="signup-code" className={LABEL_CLASS}>
-                    University or company code <span className="font-normal text-ink-500">(optional)</span>
+                    Pilot, promo, university or company code <span className="font-normal text-ink-500">(optional)</span>
                   </label>
                   <input
                     id="signup-code"
                     autoComplete="off"
-                    placeholder="e.g. from your university or employer"
+                    placeholder="e.g. from your university, employer or a promotion"
                     value={orgCode}
                     onChange={(e) => setOrgCode(e.target.value)}
+                    aria-describedby="signup-code-hint"
                     className={INPUT_CLASS}
                   />
+                  <p id="signup-code-hint" className="mt-1 text-xs text-ink-500">
+                    Some programmes offer free or covered care to students and ask for proof that you are one. You can add
+                    it right after you sign up.
+                  </p>
                 </div>
 
                 <label htmlFor="signup-consent" className="flex cursor-pointer items-start gap-3">
