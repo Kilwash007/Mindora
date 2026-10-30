@@ -8,7 +8,7 @@ import { Disclaimer } from '../../components/Disclaimer.jsx'
 import { useAppState } from '../../data/AppState.jsx'
 import { api } from '../../data/api.js'
 import { professionalTypeLabel } from '../../data/professionalTypes.js'
-import { CARE_LEVEL_LABELS, formatKes } from '../../data/services.js'
+import { CARE_LEVEL_LABELS, formatKes, formatTime } from '../../data/services.js'
 
 const pad = (n) => String(n).padStart(2, '0')
 
@@ -182,6 +182,8 @@ export default function BookConsultation() {
               <p className="text-sm text-ink-600 max-w-sm mx-auto">
                 Pay the balance of <strong>{formatKes(confirmed.amountDueKes)}</strong> by M-Pesa on your Appointments
                 page. Your video link appears once it is paid.
+                {confirmed.holdExpiresAt &&
+                  ` Your slot is held until ${formatTime(confirmed.holdExpiresAt)}, and is released if it is not paid by then.`}
               </p>
             ) : (
               <p className="text-sm text-ink-600 max-w-sm mx-auto">There is nothing to pay for this session.</p>

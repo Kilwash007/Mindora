@@ -256,6 +256,17 @@ function PaymentSection({ appointment }) {
   return (
     <div className="pt-3 border-t border-ink-100 space-y-2">
       <p className="text-xs text-ink-500">Pay KES {amountDue.toLocaleString()} via M-Pesa</p>
+      {appointment.holdExpiresAt && (
+        <p className="text-xs text-amber-700">
+          Your slot is held until{' '}
+          {new Date(appointment.holdExpiresAt).toLocaleString(undefined, {
+            weekday: 'short',
+            hour: 'numeric',
+            minute: '2-digit',
+          })}
+          . Pay before then to keep it.
+        </p>
+      )}
 
       {polling && (
         <div className="flex items-center gap-2 text-sm text-navy-700 bg-teal-50 rounded-lg px-3 py-2">
