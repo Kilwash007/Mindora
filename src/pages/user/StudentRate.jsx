@@ -150,7 +150,7 @@ export default function StudentRate() {
                     required
                     className="w-full text-sm text-ink-600 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-teal-700"
                   />
-                  <p className="text-xs text-ink-400 mt-1">PDF, JPG, or PNG. Reviewed by our team, not stored anywhere else.</p>
+                  <p className="text-xs text-ink-400 mt-1">PDF, JPG, or PNG. Only our review team can see it, and it is deleted after we have reviewed it.</p>
                 </div>
               )}
 
