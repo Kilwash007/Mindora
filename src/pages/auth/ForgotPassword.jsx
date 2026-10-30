@@ -176,7 +176,7 @@ export default function ForgotPassword() {
                       autoComplete="one-time-code"
                       maxLength={6}
                       required
-                      placeholder="000000"
+                      placeholder="------"
                       value={code}
                       onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                       className={`${INPUT_CLASS} text-center text-xl font-semibold tracking-[0.4em]`}

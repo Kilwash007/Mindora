@@ -10,11 +10,6 @@ import { useAppState } from '../../data/AppState.jsx'
 const VALID_PORTALS = ['user', 'professional', 'admin']
 const PORTAL = VALID_PORTALS.includes(import.meta.env.VITE_PORTAL) ? import.meta.env.VITE_PORTAL : null
 
-// Staging only: shows a notice on the code screen that no email is sent
-// and the code is 000000. Set VITE_TEST_CODE=true to turn it on.
-// Must stay OFF on every live site.
-const SHOW_TEST_CODE = import.meta.env.VITE_TEST_CODE === 'true'
-
 // Show the "clinical oversight" line on the professional page only once a
 // psychiatrist has actually been confirmed as Clinical Director.
 const SHOW_CLINICAL_OVERSIGHT = false
@@ -121,12 +116,6 @@ export default function Login() {
             We sent a 6-digit code to <span className="font-medium text-navy-700">{otpPending.email}</span>
           </p>
 
-          {SHOW_TEST_CODE && otpPending.role !== 'admin' && (
-            <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 mb-4 text-center">
-              Test environment: no email is sent. Enter 000000.
-            </p>
-          )}
-
           <form onSubmit={handleVerify} className="space-y-4">
             <label htmlFor="otp-code" className="sr-only">
               6-digit code
@@ -137,7 +126,7 @@ export default function Login() {
               inputMode="numeric"
               autoComplete="one-time-code"
               maxLength={6}
-              placeholder="000000"
+              placeholder="------"
               value={otpCode}
               onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
               className="w-full rounded-xl border border-ink-200 px-4 py-3 text-center text-2xl tracking-[0.5em] font-semibold focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
