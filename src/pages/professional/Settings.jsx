@@ -15,8 +15,6 @@ const docTypes = [
   { value: 'OTHER', label: 'Other supporting document' },
 ]
 
-const STUDENT_RATE_FEE_CAP_KES = 2000
-
 function docStatusTone(status) {
   if (status === 'APPROVED') return 'teal'
   if (status === 'REJECTED') return 'acute'
@@ -37,8 +35,6 @@ const emptyProfileForm = {
   languages: '',
   yearsExperience: 0,
   location: '',
-  feeKes: 0,
-  studentRateFeeKes: '',
   supervisorName: '',
   onlineAvailable: true,
   inPersonAvailable: false,
@@ -76,8 +72,6 @@ export default function Settings() {
           languages: (p.languages ?? []).join(', '),
           yearsExperience: p.yearsExperience ?? 0,
           location: p.location ?? '',
-          feeKes: p.feeKes ?? 0,
-          studentRateFeeKes: p.studentRateFeeKes != null ? String(p.studentRateFeeKes) : '',
           supervisorName: p.supervisorName ?? '',
           onlineAvailable: p.onlineAvailable ?? true,
           inPersonAvailable: p.inPersonAvailable ?? false,
@@ -110,15 +104,6 @@ export default function Settings() {
     setProfileSaved(false)
     setProfileError(null)
 
-    const studentRateFeeKesValue =
-      profileForm.studentRateFeeKes === '' ? null : Number(profileForm.studentRateFeeKes)
-
-    if (studentRateFeeKesValue !== null && studentRateFeeKesValue > STUDENT_RATE_FEE_CAP_KES) {
-      setProfileError(`Student Rate fee can't be more than KES ${STUDENT_RATE_FEE_CAP_KES.toLocaleString()}.`)
-      setSavingProfile(false)
-      return
-    }
-
     try {
       const payload = {
         type: profileForm.type,
@@ -137,8 +122,6 @@ export default function Settings() {
           .filter(Boolean),
         yearsExperience: Number(profileForm.yearsExperience),
         location: profileForm.location,
-        feeKes: Number(profileForm.feeKes),
-        studentRateFeeKes: studentRateFeeKesValue,
         supervisorName: profileForm.supervisorName === '' ? null : profileForm.supervisorName,
         onlineAvailable: profileForm.onlineAvailable,
         inPersonAvailable: profileForm.inPersonAvailable,
@@ -299,46 +282,20 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-ink-500 block mb-1">Years of experience</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={profileForm.yearsExperience}
-                    onChange={(e) => setProfileForm({ ...profileForm, yearsExperience: e.target.value })}
-                    className="w-full rounded-xl border border-ink-200 px-4 py-2.5 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-ink-500 block mb-1">Fee (KES per session)</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={profileForm.feeKes}
-                    onChange={(e) => setProfileForm({ ...profileForm, feeKes: e.target.value })}
-                    className="w-full rounded-xl border border-ink-200 px-4 py-2.5 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
-                  />
-                </div>
-              </div>
-
               <div>
-                <label className="text-xs text-ink-500 block mb-1">
-                  Student Rate fee <span className="text-ink-400">(optional, max KES {STUDENT_RATE_FEE_CAP_KES.toLocaleString()})</span>
-                </label>
+                <label className="text-xs text-ink-500 block mb-1">Years of experience</label>
                 <input
                   type="number"
-                  min={1}
-                  max={STUDENT_RATE_FEE_CAP_KES}
-                  value={profileForm.studentRateFeeKes}
-                  onChange={(e) => setProfileForm({ ...profileForm, studentRateFeeKes: e.target.value })}
-                  placeholder="Leave blank to not offer this rate"
+                  min={0}
+                  value={profileForm.yearsExperience}
+                  onChange={(e) => setProfileForm({ ...profileForm, yearsExperience: e.target.value })}
                   className="w-full rounded-xl border border-ink-200 px-4 py-2.5 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
                 />
-                <p className="text-xs text-ink-400 mt-1">
-                  A discounted rate for verified students and young adults (18–25). Mindora takes 25%
-                  on these bookings instead of the usual 35%.
-                </p>
+              </div>
+
+              <div className="rounded-xl bg-ink-50 border border-ink-100 px-4 py-3 text-xs text-ink-600">
+                Session prices are fixed by Mindora for each service, and you are paid your agreed share of every
+                session and triage review. You no longer set your own fee.
               </div>
 
               <div>

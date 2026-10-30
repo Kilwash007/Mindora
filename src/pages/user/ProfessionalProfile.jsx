@@ -8,6 +8,7 @@ import Button from '../../components/Button.jsx'
 import { api } from '../../data/api.js'
 import { useAppState } from '../../data/AppState.jsx'
 import { professionalTypeLabel } from '../../data/professionalTypes.js'
+import { servicesFor, formatKes, usePrices } from '../../data/services.js'
 
 function modeLabel(p) {
   if (p.onlineAvailable && p.inPersonAvailable) return 'Online / In-person'
@@ -36,6 +37,7 @@ export default function ProfessionalProfile() {
   const [professional, setProfessional] = useState(null)
   const [error, setError] = useState(null)
   const [reviewData, setReviewData] = useState(null)
+  const { priceOf } = usePrices()
 
   useEffect(() => {
     let cancelled = false
@@ -171,14 +173,22 @@ export default function ProfessionalProfile() {
               )}
             </div>
             <div className="border-t border-ink-100 pt-4 mb-4">
-              <p className="text-xs text-ink-500 mb-1">Consultation fee</p>
-              <p className="text-2xl font-bold text-navy-800">
-                {professional.feeKes ? `KES ${professional.feeKes.toLocaleString()}` : 'Not listed'}
-              </p>
+              <p className="text-xs text-ink-500 mb-2">Sessions and prices</p>
+              <div className="space-y-1 mb-2">
+                {servicesFor(professional.type, priceOf).map((s) => (
+                  <div key={s.service} className="flex items-center justify-between text-sm">
+                    <span className="text-ink-600">{s.label}</span>
+                    <span className="font-bold text-navy-800">{formatKes(s.priceKes)}</span>
+                  </div>
+                ))}
+              </div>
               <p className="text-xs text-ink-400">{modeLabel(professional)}</p>
+              <p className="text-xs text-ink-400 mt-2">
+                Booked after a screening and triage. Your triage decides which service you need.
+              </p>
             </div>
             <Button variant="accent" className="w-full" onClick={handleBook}>
-              Book consultation
+              Book a session
             </Button>
           </Card>
         </div>

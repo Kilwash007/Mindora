@@ -25,6 +25,9 @@ import UserMessages from './pages/user/Messages.jsx'
 import Groups from './pages/user/Groups.jsx'
 import GroupDetail from './pages/user/GroupDetail.jsx'
 import StudentRate from './pages/user/StudentRate.jsx'
+import TriageList from './pages/user/TriageList.jsx'
+import TriageStart from './pages/user/TriageStart.jsx'
+import Triage from './pages/user/Triage.jsx'
 import UserSettings from './pages/user/Settings.jsx'
 
 // Professional portal
@@ -42,6 +45,8 @@ import FollowUps from './pages/professional/FollowUps.jsx'
 import Reports from './pages/professional/Reports.jsx'
 import ClinicalResources from './pages/professional/ClinicalResources.jsx'
 import ProSettings from './pages/professional/Settings.jsx'
+import TriageQueue from './pages/professional/TriageQueue.jsx'
+import TriageDetail from './pages/professional/TriageDetail.jsx'
 
 // Admin portal
 import Overview from './pages/admin/Overview.jsx'
@@ -52,6 +57,7 @@ import AdminAppointments from './pages/admin/Appointments.jsx'
 import Safety from './pages/admin/Safety.jsx'
 import Analytics from './pages/admin/Analytics.jsx'
 import Payouts from './pages/admin/Payouts.jsx'
+import Prices from './pages/admin/Prices.jsx'
 import StudentRateReview from './pages/admin/StudentRateReview.jsx'
 import Institutions from './pages/admin/Institutions.jsx'
 import DeletionRequests from './pages/admin/DeletionRequests.jsx'
@@ -72,6 +78,9 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="check-in" element={<CheckIn />} />
         <Route path="check-in/result" element={<AssessmentResult />} />
+        <Route path="triage" element={<TriageList />} />
+        <Route path="triage/new/:checkInId" element={<TriageStart />} />
+        <Route path="triage/:id" element={<Triage />} />
         <Route path="find-a-professional" element={<FindProfessional />} />
         <Route path="find-a-professional/:id" element={<ProfessionalProfile />} />
         <Route path="book" element={<BookConsultation />} />
@@ -89,6 +98,8 @@ export default function App() {
       {/* Professional portal */}
       <Route path="/pro" element={<RequireAuth><ProfessionalLayout /></RequireAuth>}>
         <Route index element={<ProfessionalDashboard />} />
+        <Route path="triage" element={<TriageQueue />} />
+        <Route path="triage/:id" element={<TriageDetail />} />
         <Route path="referrals" element={<ProfessionalDashboard />} />
         <Route path="referrals/:id" element={<ReferralDetail />} />
         <Route path="clients" element={<Clients />} />
@@ -115,6 +126,7 @@ export default function App() {
         <Route path="safety" element={<Safety />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="payouts" element={<Payouts />} />
+        <Route path="prices" element={<Prices />} />
         <Route path="student-rate" element={<StudentRateReview />} />
         <Route path="institutions" element={<Institutions />} />
         <Route path="deletion-requests" element={<DeletionRequests />} />

@@ -1,39 +1,106 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, AlertOctagon, CheckCircle2, ShieldAlert } from 'lucide-react'
+import { AlertTriangle, AlertOctagon, CheckCircle2, ShieldAlert, Loader2 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader.jsx'
 import Card from '../../components/Card.jsx'
 import Badge from '../../components/Badge.jsx'
 import Button from '../../components/Button.jsx'
 import { Disclaimer } from '../../components/Disclaimer.jsx'
 import { useAppState } from '../../data/AppState.jsx'
+import { api } from '../../data/api.js'
+import { formatKes, usePrices } from '../../data/services.js'
+
+function formatDay(iso) {
+  return iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }) : null
+}
 
 export default function AssessmentResult() {
   const { lastResult } = useAppState()
   const navigate = useNavigate()
+  const { priceOf } = usePrices()
+  // After a page refresh the in-memory result is gone, so fall back to the
+  // latest saved screening rather than making the person start again.
+  const [latest, setLatest] = useState(undefined) // undefined = not asked yet
 
   useEffect(() => {
-    if (!lastResult) navigate('/app/check-in')
-  }, [lastResult, navigate])
+    if (lastResult) return
+    api
+      .getLatestScreening()
+      .then(setLatest)
+      .catch(() => setLatest(null))
+  }, [lastResult])
 
-  if (!lastResult) return null
+  useEffect(() => {
+    if (!lastResult && (latest === null || (latest && !latest.valid))) {
+      navigate('/app/check-in', { replace: true })
+    }
+  }, [lastResult, latest, navigate])
 
-  switch (lastResult.riskLevel) {
+  let result = lastResult
+  if (!result && latest?.valid) {
+    result = {
+      id: latest.id,
+      riskLevel: latest.riskLevel,
+      validUntil: latest.validUntil,
+      substanceFlag: false,
+      next: latest.riskLevel === 'ACUTE' ? 'FREE_TRIAGE' : 'PAY_TRIAGE',
+      triageId: latest.triage?.id ?? null,
+    }
+  }
+
+  if (!result) {
+    return (
+      <div className="p-8 flex items-center gap-2 text-ink-500 text-sm">
+        <Loader2 className="h-4 w-4 animate-spin" /> Loading your result...
+      </div>
+    )
+  }
+
+  const triagePrice = priceOf('TRIAGE')
+
+  switch (result.riskLevel) {
     case 'ACUTE':
-      return <AcuteRisk />
+      return <AcuteRisk result={result} />
     case 'HIGH':
-      return <HighRisk />
+      return <HighRisk result={result} triagePrice={triagePrice} />
     case 'ELEVATED':
-      return <ElevatedRisk substanceFlag={lastResult.substanceFlag} />
+      return <ElevatedRisk result={result} triagePrice={triagePrice} />
     default:
-      return <LowConcern />
+      return <LowConcern result={result} triagePrice={triagePrice} />
   }
 }
 
-function LowConcern() {
+// The next step for everyone except an ACUTE result: a paid triage.
+function TriageStep({ result, triagePrice, intro, variant = 'accent', extra }) {
+  const until = formatDay(result.validUntil)
+  return (
+    <Card>
+      <h3 className="font-semibold text-navy-800 mb-2">Recommended next step</h3>
+      <p className="text-sm text-ink-600 mb-4">{intro}</p>
+      <div className="rounded-xl bg-ink-50 border border-ink-100 px-4 py-3 text-sm text-ink-600 mb-4">
+        <p className="font-semibold text-navy-800 mb-1">
+          Triage{triagePrice != null ? ` — ${formatKes(triagePrice)}` : ''}
+        </p>
+        <p>
+          A clinician reads your screening and chats with you for 15 to 20 minutes, then recommends the right kind
+          of care and who to see. The triage fee is credited to your first session.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <Button as="link" to={`/app/triage/new/${result.id}`} variant={variant}>
+          Book triage{triagePrice != null ? ` — ${formatKes(triagePrice)}` : ''}
+        </Button>
+        {extra}
+      </div>
+      {until && <p className="text-xs text-ink-400 mt-4">This screening is valid until {until}.</p>}
+    </Card>
+  )
+}
+
+function LowConcern({ result, triagePrice }) {
   return (
     <div>
-      <PageHeader eyebrow="Wellbeing check-in" title="Your wellbeing assessment" />
+      <PageHeader eyebrow="Free screening" title="Your wellbeing assessment" />
       <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-6">
         <Card className="text-center py-10">
           <div className="mx-auto h-14 w-14 rounded-full bg-teal-50 flex items-center justify-center mb-4">
@@ -45,20 +112,17 @@ function LowConcern() {
           </p>
         </Card>
 
-        <Card>
-          <h3 className="font-semibold text-navy-800 mb-2">Recommended next step</h3>
-          <p className="text-sm text-ink-600 mb-4">
-            No action needed right now — regular check-ins help catch changes early.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Button as="link" to="/app/resources" variant="secondary">
+        <TriageStep
+          result={result}
+          triagePrice={triagePrice}
+          variant="secondary"
+          intro="No urgent action is needed right now, and regular screenings help catch changes early. If you would still like to talk to someone, a triage is where care starts."
+          extra={
+            <Button as="link" to="/app/resources" variant="ghost">
               View wellbeing resources
             </Button>
-            <Button as="link" to="/app" variant="ghost">
-              Continue monitoring
-            </Button>
-          </div>
-        </Card>
+          }
+        />
 
         <Disclaimer>
           This assessment is not a diagnosis. Mindora uses screening to help guide appropriate
@@ -69,11 +133,12 @@ function LowConcern() {
   )
 }
 
-function ElevatedRisk({ substanceFlag }) {
+function ElevatedRisk({ result, triagePrice }) {
+  const { substanceFlag } = result
   return (
     <div>
       <PageHeader
-        eyebrow="Wellbeing check-in"
+        eyebrow="Free screening"
         title={
           substanceFlag
             ? 'Your results suggest support around alcohol or drug use may help.'
@@ -104,22 +169,16 @@ function ElevatedRisk({ substanceFlag }) {
           </Disclaimer>
         )}
 
-        <Card>
-          <h3 className="font-semibold text-navy-800 mb-2">Recommended next step</h3>
-          <p className="text-sm text-ink-600 mb-4">
-            {substanceFlag
-              ? 'Some Mindora professionals focus specifically on addiction support — connecting with one can help you build a plan that works for you.'
-              : 'A psychologist is generally the right starting point for this level of concern.'}
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Button as="link" to="/app/find-a-professional" variant="accent">
-              {substanceFlag ? 'Find a professional' : 'Find a psychologist'}
-            </Button>
+        <TriageStep
+          result={result}
+          triagePrice={triagePrice}
+          intro="A triage is the first step: a clinician looks at your answers with you and recommends the support that fits."
+          extra={
             <Button as="link" to="/app/resources" variant="secondary">
               Learn more
             </Button>
-          </div>
-        </Card>
+          }
+        />
 
         <Disclaimer>
           This assessment is not a diagnosis. Mindora uses screening to help guide you toward
@@ -130,10 +189,10 @@ function ElevatedRisk({ substanceFlag }) {
   )
 }
 
-function HighRisk() {
+function HighRisk({ result, triagePrice }) {
   return (
     <div>
-      <PageHeader eyebrow="Wellbeing check-in" title="Your results suggest you should speak with a professional soon." />
+      <PageHeader eyebrow="Free screening" title="Your results suggest you should speak with a professional soon." />
       <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-6">
         <Card className="text-center py-10 border-orange-200">
           <div className="mx-auto h-14 w-14 rounded-full bg-orange-50 flex items-center justify-center mb-4">
@@ -146,21 +205,16 @@ function HighRisk() {
           </p>
         </Card>
 
-        <Card>
-          <h3 className="font-semibold text-navy-800 mb-2">Recommended next step</h3>
-          <p className="text-sm text-ink-600 mb-4">
-            Given the level of concern, a psychiatrist may be the more appropriate first step,
-            particularly if medication or a fuller clinical evaluation may be needed.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Button as="link" to="/app/find-a-professional" variant="accent">
-              Find a psychiatrist
-            </Button>
+        <TriageStep
+          result={result}
+          triagePrice={triagePrice}
+          intro="Given the level of concern, we recommend starting your triage as soon as you can, so a clinician can review your answers and decide the right level of care, including whether to see a psychiatrist."
+          extra={
             <Button as="link" to="/app/resources" variant="secondary">
               View resources
             </Button>
-          </div>
-        </Card>
+          }
+        />
 
         <Disclaimer tone="urgent">
           If you are in immediate danger or believe you may harm yourself or someone else, please
@@ -177,10 +231,10 @@ function HighRisk() {
   )
 }
 
-function AcuteRisk() {
+function AcuteRisk({ result }) {
   return (
     <div>
-      <PageHeader eyebrow="Wellbeing check-in" title="Please reach out for support right now." />
+      <PageHeader eyebrow="Free screening" title="Please reach out for support right now." />
       <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-6">
         <Card className="text-center py-10 border-red-200 bg-red-50/40">
           <div className="mx-auto h-14 w-14 rounded-full bg-red-50 flex items-center justify-center mb-4">
@@ -208,14 +262,21 @@ function AcuteRisk() {
         </Disclaimer>
 
         <Card>
-          <h3 className="font-semibold text-navy-800 mb-2">Recommended next step</h3>
+          <h3 className="font-semibold text-navy-800 mb-2">Free urgent review</h3>
           <p className="text-sm text-ink-600 mb-4">
-            A Mindora clinical safety reviewer has been notified of this result and may reach out
-            directly. You can also connect with a professional right now.
+            A Mindora clinical safety reviewer has been notified, and we have opened a{' '}
+            <strong>free</strong> urgent triage for you. A clinician will review your screening as a priority and
+            chat with you. There is nothing to pay.
           </p>
-          <Button as="link" to="/app/find-a-professional" variant="accent">
-            Find urgent support
-          </Button>
+          {result.triageId ? (
+            <Button as="link" to={`/app/triage/${result.triageId}`} variant="accent">
+              Open my urgent triage
+            </Button>
+          ) : (
+            <Button as="link" to={`/app/triage/new/${result.id}`} variant="accent">
+              Start my free urgent triage
+            </Button>
+          )}
         </Card>
 
         <Disclaimer>

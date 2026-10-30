@@ -129,17 +129,17 @@ export function AppStateProvider({ children }) {
     }
   }, [])
 
-  // answersById: { [questionId]: numericValue } — keyed by the new
-  // screening.js question ids (phq9_1, gad7_1, cageaid_1, ...). domain is
-  // the instrument (PHQ9/GAD7/CAGEAID), matching what checkin.routes.js
-  // now expects for scoring.
+  // answersById: { [questionId]: numericValue } — keyed by the screening.js
+  // question ids (phq9_1, gad7_1, cageaid_1, ...). domain is the instrument
+  // (PHQ9/GAD7/CAGEAID). Sent to POST /api/v1/screenings, which scores it on
+  // the server and, for an ACUTE result, opens a free urgent triage.
   const submitCheckIn = useCallback(async (answersById) => {
     const answers = SCREENING_QUESTIONS.map((q) => ({
       domain: q.domain,
       questionId: q.id,
       value: answersById[q.id],
     }))
-    const result = await api.submitCheckIn(answers)
+    const result = await api.submitScreening(answers)
     setLastResult(result)
     return result
   }, [])

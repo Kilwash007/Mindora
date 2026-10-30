@@ -355,6 +355,12 @@ export default function Appointments() {
                     <MapPin className="h-3.5 w-3.5" />
                   )}
                   {a.type === 'ONLINE' ? 'Online' : 'In-person'} • KES {a.feeKes.toLocaleString()}
+                  {a.triageCreditKes > 0 && (
+                    <span className="text-teal-600">
+                      {' '}
+                      (KES {a.triageCreditKes.toLocaleString()} triage credit applied)
+                    </span>
+                  )}
                   {a.institutionCoveredKes > 0 && (
                     <span className="text-teal-600">
                       {' '}
@@ -376,7 +382,9 @@ export default function Appointments() {
                   </Button>
                 ) : (
                   <p className="text-xs text-ink-400">
-                    Join link opens 10 minutes before your scheduled time.
+                    {a.meetingUrl
+                      ? 'Join link opens 10 minutes before your scheduled time.'
+                      : 'Your video link appears here once the balance is paid.'}
                   </p>
                 )}
               </div>

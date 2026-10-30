@@ -14,6 +14,7 @@ import {
   BookOpen,
   Settings,
   Loader2,
+  Stethoscope,
 } from 'lucide-react'
 import Sidebar from '../components/Sidebar.jsx'
 import { useAppState } from '../data/AppState.jsx'
@@ -22,6 +23,7 @@ import AgreementAcceptance from '../pages/professional/AgreementAcceptance.jsx'
 
 const items = [
   { to: '/pro', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/pro/triage', label: 'Triage', icon: Stethoscope },
   { to: '/pro/referrals', label: 'Referrals', icon: Inbox },
   { to: '/pro/clients', label: 'Clients', icon: Users },
   { to: '/pro/appointments', label: 'Appointments', icon: CalendarDays },

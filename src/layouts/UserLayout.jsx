@@ -11,13 +11,15 @@ import {
   Users,
   GraduationCap,
   Settings,
+  Stethoscope,
 } from 'lucide-react'
 import Sidebar from '../components/Sidebar.jsx'
 import { useAppState } from '../data/AppState.jsx'
 
 const items = [
   { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/app/check-in', label: 'Check-in', icon: ClipboardCheck },
+  { to: '/app/check-in', label: 'Free screening', icon: ClipboardCheck },
+  { to: '/app/triage', label: 'My triage', icon: Stethoscope },
   { to: '/app/wellbeing', label: 'My wellbeing', icon: LineChart },
   { to: '/app/find-a-professional', label: 'Find a professional', icon: Search },
   { to: '/app/appointments', label: 'Appointments', icon: CalendarDays },

@@ -6,6 +6,7 @@ import Card from '../../components/Card.jsx'
 import Badge from '../../components/Badge.jsx'
 import { api } from '../../data/api.js'
 import { PROFESSIONAL_TYPE_OPTIONS, PROFESSIONAL_TYPE_LABELS, professionalTypeLabel } from '../../data/professionalTypes.js'
+import { servicesFor, formatKes, usePrices } from '../../data/services.js'
 
 const specialties = ['Any', ...PROFESSIONAL_TYPE_OPTIONS.map((o) => o.value)]
 const specialtyLabels = { Any: 'Any', ...PROFESSIONAL_TYPE_LABELS }
@@ -24,6 +25,7 @@ export default function FindProfessional() {
   const [specialty, setSpecialty] = useState('Any')
   const [concern, setConcern] = useState('Any')
   const [mode, setMode] = useState('Any')
+  const { priceOf } = usePrices()
 
   useEffect(() => {
     let cancelled = false
@@ -82,6 +84,11 @@ export default function FindProfessional() {
             </Card>
           )}
 
+          <Card className="text-sm text-ink-600">
+            Sessions are booked after a free screening and a triage. Your triage decides the kind of care you need, and
+            the price of each session is fixed by service, as shown below.
+          </Card>
+
           {professionals !== null && (
             <p className="text-sm text-ink-500">{filtered.length} professionals found</p>
           )}
@@ -107,9 +114,14 @@ export default function FindProfessional() {
                 </div>
               </div>
               <div className="md:text-right shrink-0 pl-18 md:pl-0">
-                <p className="font-semibold text-navy-800 mb-1">
-                  {p.feeKes ? `KES ${p.feeKes.toLocaleString()} / session` : 'Fee not listed'}
-                </p>
+                <div className="mb-1 space-y-0.5">
+                  {servicesFor(p.type, priceOf).map((s) => (
+                    <p key={s.service} className="text-sm font-semibold text-navy-800">
+                      {s.label}
+                      {s.priceKes != null ? ` · ${formatKes(s.priceKes)}` : ''}
+                    </p>
+                  ))}
+                </div>
                 <p className="text-xs text-ink-400 mb-3">{modeLabel(p)}</p>
                 <Link
                   to={`/app/find-a-professional/${p.id}`}

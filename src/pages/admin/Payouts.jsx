@@ -109,6 +109,7 @@ function LedgerTab() {
               <p className="font-semibold text-navy-800">{entry.professionalName}</p>
               <p className="text-xs text-ink-500 mt-0.5">
                 {entry.appointmentCount} completed, paid session{entry.appointmentCount === 1 ? '' : 's'}
+                {entry.triageCount > 0 && ` · ${entry.triageCount} triage review${entry.triageCount === 1 ? '' : 's'}`}
               </p>
             </div>
             <div className="text-right">
@@ -175,6 +176,9 @@ function HistoryTab() {
             {p.reference && <span className="font-mono">{p.reference}</span>}
             <span>· {formatDate(p.paidAt)}</span>
             <span>· {p.appointments.length} session{p.appointments.length === 1 ? '' : 's'}</span>
+            {p.triages?.length > 0 && (
+              <span>· {p.triages.length} triage review{p.triages.length === 1 ? '' : 's'}</span>
+            )}
           </div>
           {p.note && <p className="text-xs text-ink-400 mt-1 italic">{p.note}</p>}
         </Card>

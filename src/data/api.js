@@ -78,7 +78,10 @@ async function request(path, { method = 'GET', body, auth = true, _retried = fal
         if (combined.length) message = combined.join(', ')
       }
     }
-    throw new Error(message)
+    const error = new Error(message)
+    error.status = res.status
+    error.code = data?.code
+    throw error
   }
 
   return data
@@ -251,6 +254,32 @@ export const api = {
   initiatePayment: (appointmentId, phoneNumber) =>
     request('/api/payments/initiate', { method: 'POST', body: { appointmentId, phoneNumber } }),
   getPaymentStatus: (appointmentId) => request(`/api/payments/appointment/${appointmentId}`),
+
+  // --- Prices, screening, triage and booking (/api/v1) ---
+  getPrices: () => request('/api/v1/prices', { auth: false }),
+  adminGetPrices: () => request('/api/v1/prices/admin'),
+  adminUpdatePrice: (service, payload) =>
+    request(`/api/v1/prices/${service}`, { method: 'PATCH', body: payload }),
+  submitScreening: (answers) => request('/api/v1/screenings', { method: 'POST', body: { answers } }),
+  getLatestScreening: () => request('/api/v1/screenings/latest'),
+  getRegistration: () => request('/api/v1/me/registration'),
+  updateRegistration: (payload) => request('/api/v1/me/registration', { method: 'PATCH', body: payload }),
+  createTriage: (checkInId) => request('/api/v1/triage', { method: 'POST', body: { checkInId } }),
+  getMyTriages: () => request('/api/v1/triage/mine'),
+  getTriage: (id) => request(`/api/v1/triage/${id}`),
+  payTriage: (id, phoneNumber) =>
+    request(`/api/v1/triage/${id}/pay`, { method: 'POST', body: { phoneNumber } }),
+  getTriageMessages: (id) => request(`/api/v1/triage/${id}/messages`),
+  sendTriageMessage: (id, content) =>
+    request(`/api/v1/triage/${id}/messages`, { method: 'POST', body: { content } }),
+  getTriageQueue: () => request('/api/v1/triage/queue'),
+  claimTriage: (id) => request(`/api/v1/triage/${id}/claim`, { method: 'POST' }),
+  completeTriage: (id, payload) =>
+    request(`/api/v1/triage/${id}/complete`, { method: 'POST', body: payload }),
+  getBookingOptions: () => request('/api/v1/appointments/options'),
+  bookSession: (payload) => request('/api/v1/appointments', { method: 'POST', body: payload }),
+  getOnCall: () => request('/api/v1/clinician/on-call'),
+  setOnCall: (onCall) => request('/api/v1/clinician/on-call', { method: 'PUT', body: { onCall } }),
 
   // --- Payouts (admin) ---
   getPayoutLedger: () => request('/api/payments/ledger'),

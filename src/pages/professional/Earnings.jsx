@@ -45,7 +45,7 @@ export default function Earnings() {
             </div>
             <p className="text-2xl font-bold text-navy-800">KES {data.owedKes.toLocaleString()}</p>
             <p className="text-xs text-ink-400 mt-1">
-              From completed, paid sessions not yet settled. Mindora pays out by bank transfer or M-Pesa.
+              From completed, paid sessions and triage reviews not yet settled. Mindora pays out by bank transfer or M-Pesa.
             </p>
           </Card>
         )}
@@ -62,6 +62,7 @@ export default function Earnings() {
                   </div>
                   <p className="text-xs text-ink-500">
                     {formatDate(p.paidAt)} · {p.appointments.length} session{p.appointments.length === 1 ? '' : 's'}
+                    {p.triages?.length > 0 && ` · ${p.triages.length} triage review${p.triages.length === 1 ? '' : 's'}`}
                   </p>
                 </Card>
               ))}

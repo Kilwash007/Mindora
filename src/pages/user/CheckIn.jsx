@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShieldAlert, Loader2 } from 'lucide-react'
+import { ShieldAlert, Loader2, ClipboardCheck } from 'lucide-react'
 import PageHeader from '../../components/PageHeader.jsx'
 import Card from '../../components/Card.jsx'
 import Button from '../../components/Button.jsx'
@@ -20,7 +20,65 @@ function CrisisNotice() {
   )
 }
 
+function Intro({ onStart }) {
+  const [agreed, setAgreed] = useState(false)
+
+  return (
+    <div>
+      <PageHeader eyebrow="Free screening" title="A free check on how you've been feeling" />
+      <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-6">
+        <Card>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-10 w-10 rounded-full bg-teal-50 flex items-center justify-center">
+              <ClipboardCheck className="h-5 w-5 text-teal-600" />
+            </div>
+            <h2 className="text-lg font-bold text-navy-800">Before you start</h2>
+          </div>
+          <ul className="text-sm text-ink-600 space-y-2 list-disc list-inside mb-6">
+            <li>
+              It is <strong>free</strong>, and takes about 5 to 10 minutes. {SCREENING_QUESTIONS.length} short
+              questions.
+            </li>
+            <li>It uses the PHQ-9, GAD-7 and CAGE-AID, widely used screening tools. It is not a diagnosis.</li>
+            <li>
+              Everyone completes it before booking triage or a session, even if they expect a low result. Your
+              result stays valid for 30 days.
+            </li>
+            <li>
+              If your answers suggest you may be in danger, we open a <strong>free urgent review</strong> with a
+              clinician straight away.
+            </li>
+          </ul>
+
+          <label className="flex items-start gap-3 text-sm text-ink-700 mb-6 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-1"
+            />
+            <span>
+              I agree that Mindora may store my answers to guide my care, and that they may be seen by the
+              clinician who reviews my triage.
+            </span>
+          </label>
+
+          <Button variant="accent" onClick={onStart} disabled={!agreed}>
+            Start the screening
+          </Button>
+        </Card>
+
+        <p className="text-xs text-ink-500 text-center">
+          If you're in danger right now, call <strong>999</strong> or <strong>112</strong>, or Kenya Red Cross on{' '}
+          <strong>1199</strong> (toll-free, 24 hours).
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export default function CheckIn() {
+  const [started, setStarted] = useState(false)
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState({})
   const [safetyTriggered, setSafetyTriggered] = useState(false)
@@ -28,6 +86,8 @@ export default function CheckIn() {
   const [submitError, setSubmitError] = useState(null)
   const navigate = useNavigate()
   const { submitCheckIn } = useAppState()
+
+  if (!started) return <Intro onStart={() => setStarted(true)} />
 
   const question = SCREENING_QUESTIONS[step]
   const progress = ((step + 1) / SCREENING_QUESTIONS.length) * 100
@@ -50,22 +110,21 @@ export default function CheckIn() {
     }
 
     // Must wait for the real result before navigating — the result page
-    // redirects back to the start if it doesn't find one yet, which is
-    // exactly what was happening when this wasn't awaited.
+    // needs it to decide what to offer next.
     setSubmitting(true)
     setSubmitError(null)
     try {
       await submitCheckIn(answers)
       navigate('/app/check-in/result')
     } catch (err) {
-      setSubmitError(err.message || 'Could not submit your check-in. Please try again.')
+      setSubmitError(err.message || 'Could not submit your screening. Please try again.')
       setSubmitting(false)
     }
   }
 
   return (
     <div>
-      <PageHeader eyebrow="Wellbeing check-in" title="How have you been feeling lately?" />
+      <PageHeader eyebrow="Free screening" title="How have you been feeling lately?" />
 
       <div className="p-4 md:p-8 max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-2 text-sm text-ink-500">
@@ -130,7 +189,7 @@ export default function CheckIn() {
         </div>
 
         <p className="text-xs text-ink-400 mt-8 text-center">
-          This check-in uses the PHQ-9, GAD-7, and CAGE-AID — widely used, validated screening
+          This screening uses the PHQ-9, GAD-7, and CAGE-AID — widely used, validated screening
           tools. It is not a diagnosis.
         </p>
       </div>
