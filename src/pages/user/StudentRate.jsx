@@ -53,7 +53,7 @@ export default function StudentRate() {
       <PageHeader
         eyebrow="Student Rate"
         title="Student Rate"
-        subtitle="Discounted sessions for students and young adults (18–25), capped at KES 2,000."
+        subtitle="A lower session price for verified students and young adults (18–25)."
       />
 
       <div className="p-4 md:p-8 max-w-xl space-y-4">
@@ -70,8 +70,8 @@ export default function StudentRate() {
             <CheckCircle2 className="h-8 w-8 text-teal-600 mx-auto mb-2" />
             <p className="font-semibold text-navy-800 mb-1">You're verified for the Student Rate</p>
             <p className="text-sm text-ink-600">
-              Look for professionals offering this rate when you book — they'll show a discounted
-              price capped at KES 2,000.
+              The student price is applied automatically when you book, and you will see it on the
+              booking screen before you confirm.
             </p>
           </Card>
         )}

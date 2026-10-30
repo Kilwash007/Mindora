@@ -8,7 +8,7 @@ import Button from '../../components/Button.jsx'
 import { Disclaimer } from '../../components/Disclaimer.jsx'
 import { useAppState } from '../../data/AppState.jsx'
 import { api } from '../../data/api.js'
-import { formatKes, usePrices } from '../../data/services.js'
+import { formatKes, usePrices, useTriageCover } from '../../data/services.js'
 
 function formatDay(iso) {
   return iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }) : null
@@ -73,22 +73,27 @@ export default function AssessmentResult() {
 // The next step for everyone except an ACUTE result: a paid triage.
 function TriageStep({ result, triagePrice, intro, variant = 'accent', extra }) {
   const until = formatDay(result.validUntil)
+  const coveredBy = useTriageCover()
   return (
     <Card>
       <h3 className="font-semibold text-navy-800 mb-2">Recommended next step</h3>
       <p className="text-sm text-ink-600 mb-4">{intro}</p>
       <div className="rounded-xl bg-ink-50 border border-ink-100 px-4 py-3 text-sm text-ink-600 mb-4">
         <p className="font-semibold text-navy-800 mb-1">
-          Triage{triagePrice != null ? ` — ${formatKes(triagePrice)}` : ''}
+          Triage
+          {coveredBy ? ` — free, covered by ${coveredBy}` : triagePrice != null ? ` — ${formatKes(triagePrice)}` : ''}
         </p>
         <p>
           A clinician reads your screening and chats with you for 15 to 20 minutes, then recommends the right kind
-          of care and who to see. The triage fee is credited to your first session.
+          of care and who to see.{' '}
+          {coveredBy
+            ? `This triage is free for you, covered by ${coveredBy}.`
+            : 'The triage fee is credited to your first session.'}
         </p>
       </div>
       <div className="flex flex-wrap gap-3">
         <Button as="link" to={`/app/triage/new/${result.id}`} variant={variant}>
-          Book triage{triagePrice != null ? ` — ${formatKes(triagePrice)}` : ''}
+          {coveredBy ? 'Start my free triage' : `Book triage${triagePrice != null ? ` — ${formatKes(triagePrice)}` : ''}`}
         </Button>
         {extra}
       </div>

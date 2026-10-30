@@ -285,6 +285,11 @@ export default function Triage() {
                 This urgent review is free. A clinician will look at it as a priority.
               </p>
             )}
+            {triage.sponsoredBy && (
+              <p className="text-sm text-ink-600">
+                Your triage is covered by {triage.sponsoredBy}. There is nothing to pay.
+              </p>
+            )}
             {triage.status === 'QUEUED' && care?.expectedResponseBy && (
               <p className="text-sm text-ink-600">
                 {care.withinServiceHours

@@ -106,3 +106,27 @@ export function usePrices() {
   const priceOf = (service) => prices?.find((p) => p.service === service)?.priceKes ?? null
   return { prices, error, priceOf }
 }
+
+// The name of the institution covering this person's triage, or null. Shown
+// as "free, covered by ..." in place of the price. The server decides who is
+// actually covered; this only changes the wording.
+export function useTriageCover() {
+  const [name, setName] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    api
+      .getMyInstitution()
+      .then((inst) => {
+        if (!cancelled && inst && inst.status === 'ACTIVE' && inst.coversTriage && !inst.triageCoveredUsed) {
+          setName(inst.name)
+        }
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  return name
+}

@@ -36,6 +36,7 @@ const emptyForm = {
   coveragePercent: 0,
   memberLimit: '',
   sponsoredSessionsPerMember: '',
+  coversTriage: false,
 }
 
 export default function Institutions() {
@@ -181,6 +182,14 @@ export default function Institutions() {
                 className="w-full rounded-xl border border-ink-200 px-4 py-2.5 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
               />
             </div>
+            <label className="flex items-center gap-2 text-sm text-ink-600 md:col-span-2">
+              <input
+                type="checkbox"
+                checked={form.coversTriage}
+                onChange={(e) => setForm({ ...form, coversTriage: e.target.checked })}
+              />
+              Also covers each member's first triage (KES 500, paid by Mindora)
+            </label>
             <input
               placeholder="Contact name (optional)"
               value={form.contactName}
@@ -329,6 +338,19 @@ export default function Institutions() {
                     <span className="text-xs text-ink-400">sessions each</span>
                   </div>
                 </div>
+
+                <div>
+                  <label className="text-xs text-ink-500 block mb-1">Triage</label>
+                  <label className="flex items-center gap-2 text-sm text-ink-600">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(inst.coversTriage)}
+                      onChange={(e) => handleUpdate(inst.id, { coversTriage: e.target.checked })}
+                      disabled={updatingId === inst.id}
+                    />
+                    Covers each member's first triage
+                  </label>
+                </div>
               </div>
 
               <div className="pt-3 mt-3 border-t border-ink-100">
@@ -356,6 +378,10 @@ export default function Institutions() {
                         <p className="font-semibold text-navy-800">{statsById[inst.id].placesRemaining}</p>
                       </div>
                     )}
+                    <div>
+                      <p className="text-xs text-ink-500">Sponsored triages</p>
+                      <p className="font-semibold text-navy-800">{statsById[inst.id].sponsoredTriageCount ?? 0}</p>
+                    </div>
                     <div>
                       <p className="text-xs text-ink-500">Sponsored appointments</p>
                       <p className="font-semibold text-navy-800">{statsById[inst.id].sponsoredAppointmentCount}</p>
