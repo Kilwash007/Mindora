@@ -58,6 +58,7 @@ import Safety from './pages/admin/Safety.jsx'
 import Analytics from './pages/admin/Analytics.jsx'
 import Payouts from './pages/admin/Payouts.jsx'
 import Prices from './pages/admin/Prices.jsx'
+import AdminTriage from './pages/admin/Triage.jsx'
 import StudentRateReview from './pages/admin/StudentRateReview.jsx'
 import Institutions from './pages/admin/Institutions.jsx'
 import DeletionRequests from './pages/admin/DeletionRequests.jsx'
@@ -127,6 +128,7 @@ export default function App() {
         <Route path="analytics" element={<Analytics />} />
         <Route path="payouts" element={<Payouts />} />
         <Route path="prices" element={<Prices />} />
+        <Route path="triage" element={<AdminTriage />} />
         <Route path="student-rate" element={<StudentRateReview />} />
         <Route path="institutions" element={<Institutions />} />
         <Route path="deletion-requests" element={<DeletionRequests />} />

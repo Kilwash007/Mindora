@@ -13,6 +13,7 @@ import {
   UserX,
   Settings,
   Coins,
+  Activity,
 } from 'lucide-react'
 import Sidebar from '../components/Sidebar.jsx'
 import { useAppState } from '../data/AppState.jsx'
@@ -24,6 +25,7 @@ const allItems = [
   { to: '/admin/referrals', label: 'Referrals', icon: Inbox, roles: ['PLATFORM_ADMIN', 'CLINICAL_SAFETY_REVIEWER'] },
   { to: '/admin/appointments', label: 'Appointments', icon: CalendarDays, roles: ['PLATFORM_ADMIN', 'SUPPORT'] },
   { to: '/admin/safety', label: 'Safety', icon: ShieldAlert, roles: ['PLATFORM_ADMIN', 'CLINICAL_SAFETY_REVIEWER'] },
+  { to: '/admin/triage', label: 'Triage', icon: Activity, roles: ['PLATFORM_ADMIN', 'CLINICAL_SAFETY_REVIEWER'] },
   { to: '/admin/analytics', label: 'Analytics', icon: BarChart3, roles: ['PLATFORM_ADMIN'] },
   { to: '/admin/payouts', label: 'Payouts', icon: Wallet, roles: ['PLATFORM_ADMIN'] },
   { to: '/admin/prices', label: 'Prices', icon: Coins, roles: ['PLATFORM_ADMIN'] },

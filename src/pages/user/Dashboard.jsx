@@ -78,6 +78,66 @@ function CardTitle({ children, action }) {
   )
 }
 
+// What the person should do next in their care, from their latest screening,
+// their latest triage and whether they already have a session booked. The
+// server decides what is allowed; this only decides what to point at.
+export function careNextStep({ screening, triage, hasUpcoming, hasHistory }) {
+  if (triage?.status === 'AWAITING_PAYMENT') {
+    return {
+      eyebrow: 'Next step',
+      title: 'Finish your triage',
+      text: 'Your screening is ready. Pay the small triage fee so a clinician can review it with you. It is credited to your first session.',
+      to: `/app/triage/${triage.id}`,
+      label: 'Continue to payment',
+    }
+  }
+  if (triage?.status === 'QUEUED' || triage?.status === 'IN_PROGRESS') {
+    return {
+      eyebrow: 'Your triage',
+      title: 'A clinician is on your case',
+      text: 'Open it to chat with your clinician and add your details.',
+      to: `/app/triage/${triage.id}`,
+      label: 'Open my triage',
+    }
+  }
+  if (triage?.status === 'COMPLETED' && !hasUpcoming) {
+    if (triage.careLevel === 'EMERGENCY_REFERRAL') {
+      return {
+        eyebrow: 'Your triage',
+        title: 'Please read your outcome',
+        text: 'Your clinician has advice for you.',
+        to: `/app/triage/${triage.id}`,
+        label: 'Read it',
+      }
+    }
+    return {
+      eyebrow: 'Next step',
+      title: 'Book your first session',
+      text: 'Your triage is complete. Choose a professional and book. Your triage credit is applied for you.',
+      to: '/app/find-a-professional',
+      label: 'Find a professional',
+    }
+  }
+  if (screening && !triage) {
+    return {
+      eyebrow: 'Next step',
+      title: 'Your screening is ready',
+      text: 'The next step is a triage: a clinician reads your screening with you and recommends the right care.',
+      to: '/app/check-in/result',
+      label: 'See my next step',
+    }
+  }
+  return {
+    eyebrow: 'Free screening',
+    title: 'How are you, really?',
+    text: hasHistory
+      ? 'Check in on how you have been feeling. About 5 to 10 minutes, free, and your answers are confidential.'
+      : '20 short questions, about 5 to 10 minutes. It is free, and your answers are confidential.',
+    to: '/app/check-in',
+    label: hasHistory ? 'Take a new screening' : 'Start the free screening',
+  }
+}
+
 export default function Dashboard() {
   const { authUser } = useAppState()
   const firstName = authUser?.fullName?.split(' ')[0] ?? 'there'
@@ -87,6 +147,8 @@ export default function Dashboard() {
   const conversations = useLoad(api.getConversations)
   const professionals = useLoad(api.listProfessionals)
   const institution = useLoad(api.getMyInstitution)
+  const latestScreening = useLoad(api.getLatestScreening)
+  const myTriages = useLoad(api.getMyTriages)
 
   const [resetOpen, setResetOpen] = useState(false)
 
@@ -105,9 +167,9 @@ export default function Dashboard() {
 
   let changeText = ''
   if (change !== null) {
-    if (change > 0) changeText = `Up ${change} points since your last check-in.`
-    else if (change < 0) changeText = `Down ${Math.abs(change)} points since your last check-in.`
-    else changeText = 'Steady since your last check-in.'
+    if (change > 0) changeText = `Up ${change} points since your last screening.`
+    else if (change < 0) changeText = `Down ${Math.abs(change)} points since your last screening.`
+    else changeText = 'Steady since your last screening.'
   }
 
   // --- Next session: the earliest scheduled one that hasn't ended ---
@@ -124,6 +186,14 @@ export default function Dashboard() {
     next.meetingUrl &&
     Date.now() >= nextTime - JOIN_OPENS_BEFORE_MS &&
     Date.now() <= nextTime + JOIN_CLOSES_AFTER_MS
+
+  // --- The next step in care ---
+  const careStep = careNextStep({
+    screening: latestScreening.data?.valid ? latestScreening.data : null,
+    triage: myTriages.data?.[0] ?? null,
+    hasUpcoming: Boolean(next),
+    hasHistory: checkIns.length > 0,
+  })
 
   // --- Messages: prefer a conversation with unread messages ---
   const convo = conversations.data?.find((c) => c.unreadCount > 0) ?? conversations.data?.[0] ?? null
@@ -156,26 +226,26 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Row 1: check-in and next session */}
+      {/* Row 1: the next step in care, and the next session */}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="relative overflow-hidden rounded-3xl bg-navy-800 p-7 text-white shadow-lift lg:col-span-2">
           <div className="pointer-events-none absolute -top-16 -right-10 h-56 w-56 rounded-full bg-white/10" />
           <div className="pointer-events-none absolute -bottom-10 right-24 h-24 w-24 rounded-full bg-white/10" />
           <div className="relative max-w-lg">
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-brand-amber">Daily check-in</p>
-            <h2 className="mb-2 text-3xl font-extrabold tracking-tight text-white">How are you, really?</h2>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-brand-amber">{careStep.eyebrow}</p>
+            <h2 className="mb-2 text-3xl font-extrabold tracking-tight text-white">{careStep.title}</h2>
             <p className="mb-6 text-sm leading-relaxed text-navy-100">
-              A few short questions, about two minutes. Your answers are confidential.
+              {careStep.text}
             </p>
             <div className="flex flex-wrap items-center gap-4">
               <Link
-                to="/app/check-in"
+                to={careStep.to}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-amber px-5 py-3 text-sm font-bold text-navy-900 transition hover:brightness-95"
               >
-                {lastCheckIn ? 'Continue check-in' : 'Start check-in'} <ArrowRight className="h-4 w-4" />
+                {careStep.label} <ArrowRight className="h-4 w-4" />
               </Link>
               {lastCheckIn && (
-                <span className="text-sm text-navy-100">Last check-in: {relativeTime(lastCheckIn.completedAt)}</span>
+                <span className="text-sm text-navy-100">Last screening: {relativeTime(lastCheckIn.completedAt)}</span>
               )}
             </div>
           </div>
@@ -270,18 +340,18 @@ export default function Dashboard() {
           >
             Your wellbeing
           </CardTitle>
-          {history.error && <p className="text-sm text-red-600">Couldn't load your check-ins.</p>}
+          {history.error && <p className="text-sm text-red-600">Couldn't load your screenings.</p>}
           {!history.error && history.data === null && <p className="text-sm text-ink-500">Loading...</p>}
           {history.data && recent.length === 0 && (
             <p className="text-sm text-ink-600">
-              No check-ins yet. Complete your first one to start tracking your wellbeing here.
+              No screenings yet. Take your first free screening to start tracking your wellbeing here.
             </p>
           )}
           {recent.length > 0 && (
             <div>
               <div
                 role="img"
-                aria-label={`Wellbeing scores from your last ${recent.length} check-ins, latest ${latestScore} out of 100`}
+                aria-label={`Wellbeing scores from your last ${recent.length} screenings, latest ${latestScore} out of 100`}
                 className="mb-4 flex h-32 items-end gap-3 border-b border-ink-100"
               >
                 {recent.map((c, i) => (

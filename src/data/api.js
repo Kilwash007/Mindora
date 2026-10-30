@@ -260,6 +260,7 @@ export const api = {
   adminGetPrices: () => request('/api/v1/prices/admin'),
   adminUpdatePrice: (service, payload) =>
     request(`/api/v1/prices/${service}`, { method: 'PATCH', body: payload }),
+  adminGetTriageOverview: () => request('/api/v1/admin/triage'),
   submitScreening: (answers) => request('/api/v1/screenings', { method: 'POST', body: { answers } }),
   getLatestScreening: () => request('/api/v1/screenings/latest'),
   getRegistration: () => request('/api/v1/me/registration'),
