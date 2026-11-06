@@ -5,6 +5,7 @@ import PageHeader from '../../components/PageHeader.jsx'
 import Card from '../../components/Card.jsx'
 import Button from '../../components/Button.jsx'
 import { Disclaimer } from '../../components/Disclaimer.jsx'
+import MpesaPrompt from '../../components/MpesaPrompt.jsx'
 import { useAppState } from '../../data/AppState.jsx'
 import { api } from '../../data/api.js'
 import { professionalTypeLabel } from '../../data/professionalTypes.js'
@@ -44,6 +45,7 @@ export default function BookConsultation() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [confirmed, setConfirmed] = useState(null)
+  const [paid, setPaid] = useState(false)
 
   useEffect(() => {
     api
@@ -167,7 +169,7 @@ export default function BookConsultation() {
   if (confirmed) {
     return (
       <div>
-        <PageHeader eyebrow="Booking" title="Your slot is held" />
+        <PageHeader eyebrow="Booking" title={confirmed.paymentRequired && !paid ? 'Your slot is held' : 'Your session is booked'} />
         <div className="p-4 md:p-8 max-w-xl mx-auto">
           <Card className="text-center py-10 space-y-3">
             <div className="mx-auto h-14 w-14 rounded-full bg-teal-50 flex items-center justify-center">
@@ -179,18 +181,37 @@ export default function BookConsultation() {
               {confirmed.type === 'ONLINE' ? 'Online' : 'In person'}
             </p>
             {confirmed.paymentRequired ? (
-              <p className="text-sm text-ink-600 max-w-sm mx-auto">
-                Pay the balance of <strong>{formatKes(confirmed.amountDueKes)}</strong> by M-Pesa on your Appointments
-                page. Your video link appears once it is paid.
-                {confirmed.holdExpiresAt &&
-                  ` Your slot is held until ${formatTime(confirmed.holdExpiresAt)}, and is released if it is not paid by then.`}
-              </p>
+              <>
+                <p className="text-sm text-ink-600 max-w-sm mx-auto">
+                  {paid ? (
+                    <>
+                      Your balance of <strong>{formatKes(confirmed.amountDueKes)}</strong> is paid.
+                      {confirmed.type === 'ONLINE' && ' Your video link is on your Appointments page.'}
+                    </>
+                  ) : (
+                    <>
+                      Pay the balance of <strong>{formatKes(confirmed.amountDueKes)}</strong> by M-Pesa to confirm it.
+                      {confirmed.type === 'ONLINE' && ' Your video link appears once it is paid.'}
+                      {confirmed.holdExpiresAt &&
+                        ` Your slot is held until ${formatTime(confirmed.holdExpiresAt)}, and is released if it is not paid by then.`}
+                    </>
+                  )}
+                </p>
+                <div className="max-w-sm mx-auto text-left">
+                  <MpesaPrompt
+                    amountKes={confirmed.amountDueKes}
+                    send={(phone) => api.initiatePayment(confirmed.id, phone)}
+                    check={() => api.getPaymentStatus(confirmed.id)}
+                    onPaid={() => setPaid(true)}
+                  />
+                </div>
+              </>
             ) : (
               <p className="text-sm text-ink-600 max-w-sm mx-auto">There is nothing to pay for this session.</p>
             )}
             <div className="pt-2">
-              <Button as="link" to="/app/appointments" variant="accent">
-                {confirmed.paymentRequired ? 'Go to payment' : 'View my appointments'}
+              <Button as="link" to="/app/appointments" variant={confirmed.paymentRequired && !paid ? 'secondary' : 'accent'}>
+                View my appointments
               </Button>
             </div>
           </Card>
@@ -264,7 +285,7 @@ export default function BookConsultation() {
             </div>
           )}
           <p className="text-xs text-ink-400">
-            The final amount is confirmed when you book. Pay by M-Pesa on your Appointments page.
+            The final amount is confirmed when you book. An M-Pesa prompt is sent to your phone straight away.
           </p>
           <Button variant="accent" onClick={handleConfirm} disabled={submitting} className="w-full">
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm booking'}

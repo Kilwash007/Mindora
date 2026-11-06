@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Loader2, Smartphone, RefreshCw, CheckCircle2, Clock } from 'lucide-react'
+import { Loader2, CheckCircle2, Clock } from 'lucide-react'
 import PageHeader from '../../components/PageHeader.jsx'
 import Card from '../../components/Card.jsx'
 import Badge from '../../components/Badge.jsx'
@@ -8,8 +8,8 @@ import Button from '../../components/Button.jsx'
 import { Disclaimer } from '../../components/Disclaimer.jsx'
 import TriageChat from '../../components/TriageChat.jsx'
 import RegistrationForm from '../../components/RegistrationForm.jsx'
+import MpesaPrompt from '../../components/MpesaPrompt.jsx'
 import { api } from '../../data/api.js'
-import { friendlyPaymentError } from '../../data/paymentMessages.js'
 import { professionalTypeLabel } from '../../data/professionalTypes.js'
 import {
   CARE_LEVEL_LABELS,
@@ -21,12 +21,6 @@ import {
   usePrices,
 } from '../../data/services.js'
 
-const PAYMENT_POLL_MS = 3000
-// Safaricom callbacks can arrive close to a minute after the PIN is entered.
-const PAYMENT_POLL_TIMEOUT_MS = 120 * 1000
-// An STK prompt stays open for about 60 seconds; a second tap during that
-// time could make Safaricom time one of them out.
-const PAY_COOLDOWN_MS = 60 * 1000
 const REFRESH_MS = 8000
 
 function CrisisBar() {
@@ -41,101 +35,7 @@ function CrisisBar() {
 
 function PaySection({ triage, onUpdate }) {
   const { priceOf } = usePrices()
-  const [phone, setPhone] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState(null)
-  const [polling, setPolling] = useState(false)
-  const [timedOut, setTimedOut] = useState(false)
-  const [checking, setChecking] = useState(false)
-  const [cooldownUntil, setCooldownUntil] = useState(0)
-  const [, forceTick] = useState(0)
-  const pollIntervalRef = useRef(null)
-  const pollTimeoutRef = useRef(null)
-  const cooldownTimerRef = useRef(null)
-
-  const paymentStatus = triage.payment?.status ?? null
-  const price = priceOf('TRIAGE')
-
-  const stopPolling = () => {
-    clearInterval(pollIntervalRef.current)
-    clearTimeout(pollTimeoutRef.current)
-    setPolling(false)
-  }
-
-  useEffect(
-    () => () => {
-      clearInterval(pollIntervalRef.current)
-      clearTimeout(pollTimeoutRef.current)
-      clearInterval(cooldownTimerRef.current)
-    },
-    []
-  )
-
-  // Re-render once a second while the cooldown runs, so the countdown stays
-  // accurate, then stop.
-  useEffect(() => {
-    if (cooldownUntil <= Date.now()) return
-    cooldownTimerRef.current = setInterval(() => {
-      if (Date.now() >= cooldownUntil) clearInterval(cooldownTimerRef.current)
-      forceTick((n) => n + 1)
-    }, 1000)
-    return () => clearInterval(cooldownTimerRef.current)
-  }, [cooldownUntil])
-
-  const startPolling = () => {
-    setPolling(true)
-    setTimedOut(false)
-    pollIntervalRef.current = setInterval(() => {
-      api
-        .getTriage(triage.id)
-        .then((result) => {
-          onUpdate(result)
-          const s = result.payment?.status
-          if (s === 'PAID' || s === 'FAILED') stopPolling()
-        })
-        .catch(() => {})
-    }, PAYMENT_POLL_MS)
-    pollTimeoutRef.current = setTimeout(() => {
-      clearInterval(pollIntervalRef.current)
-      setPolling(false)
-      setTimedOut(true)
-    }, PAYMENT_POLL_TIMEOUT_MS)
-  }
-
-  const handleCheckStatus = async () => {
-    setChecking(true)
-    setError(null)
-    try {
-      const result = await api.getTriage(triage.id)
-      onUpdate(result)
-      if (result.payment?.status === 'PAID' || result.payment?.status === 'FAILED') setTimedOut(false)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setChecking(false)
-    }
-  }
-
-  const handlePay = async (e) => {
-    e.preventDefault()
-    if (polling || Date.now() < cooldownUntil) return
-    setSubmitting(true)
-    setError(null)
-    setTimedOut(false)
-    try {
-      await api.payTriage(triage.id, phone)
-      setCooldownUntil(Date.now() + PAY_COOLDOWN_MS)
-      startPolling()
-      handleCheckStatus()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const cooldownSeconds = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000))
-  const payLocked = polling || submitting || cooldownSeconds > 0
+  const price = triage.payment?.amountKes ?? priceOf('TRIAGE')
 
   return (
     <Card className="space-y-4">
@@ -143,68 +43,27 @@ function PaySection({ triage, onUpdate }) {
         <h3 className="font-semibold text-navy-800 mb-1">Pay for your triage</h3>
         <p className="text-sm text-ink-600">
           The triage fee is {price != null ? <strong>{formatKes(price)}</strong> : 'a small fixed fee'}, paid by M-Pesa.
-          It is credited towards your first session, so you do not pay it twice. The amount on your phone is the final
-          amount.
+          It is credited towards your first session, so you do not pay it twice. As soon as it is paid, a clinician is
+          alerted to review your screening.
         </p>
       </div>
-
-      {polling && (
-        <div className="flex items-center gap-2 text-sm text-navy-700 bg-teal-50 rounded-lg px-3 py-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Check your phone and enter your M-Pesa PIN to complete payment.
-        </div>
-      )}
-
-      {timedOut && paymentStatus === 'PENDING' && (
-        <div className="text-sm text-navy-700 bg-amber-50 rounded-lg px-3 py-2 space-y-2">
-          <p>
-            We haven't received confirmation from M-Pesa yet. If you entered your PIN, please wait a moment and check
-            again. If no prompt appeared on your phone, you can try again.
-          </p>
-          <Button type="button" variant="secondary" onClick={handleCheckStatus} disabled={checking}>
-            {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Check status
-          </Button>
-        </div>
-      )}
-
-      {!polling && !timedOut && paymentStatus === 'PENDING' && (
-        <div className="text-sm text-navy-700 bg-amber-50 rounded-lg px-3 py-2 space-y-2">
-          <p>A payment prompt was sent earlier. If you have already paid, check the status.</p>
-          <Button type="button" variant="secondary" onClick={handleCheckStatus} disabled={checking}>
-            {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Check status
-          </Button>
-        </div>
-      )}
-
-      {paymentStatus === 'FAILED' && !polling && (
-        <p className="text-sm text-red-600">{friendlyPaymentError(triage.payment?.resultDesc)}</p>
-      )}
-
-      {!polling && (
-        <form onSubmit={handlePay} className="flex gap-2">
-          <div className="flex-1 relative">
-            <Smartphone className="h-4 w-4 text-ink-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="tel"
-              placeholder="07XX XXX XXX"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              className="w-full rounded-lg border border-ink-200 pl-9 pr-3 py-2 text-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
-            />
-          </div>
-          <Button type="submit" variant="accent" disabled={payLocked || !phone}>
-            {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : cooldownSeconds > 0 ? (
-              `Wait ${cooldownSeconds}s`
-            ) : (
-              'Pay'
-            )}
-          </Button>
-        </form>
-      )}
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      <MpesaPrompt
+        amountKes={price}
+        initialStatus={triage.payment?.status ?? null}
+        initialPhoneMasked={triage.payment?.phoneMasked ?? null}
+        initialResultDesc={triage.payment?.resultDesc ?? null}
+        send={(phone) => api.payTriage(triage.id, phone)}
+        check={() =>
+          api.getTriage(triage.id).then((result) => {
+            onUpdate(result)
+            return {
+              status: result.payment?.status ?? null,
+              resultDesc: result.payment?.resultDesc ?? null,
+              phoneMasked: result.payment?.phoneMasked ?? null,
+            }
+          })
+        }
+      />
     </Card>
   )
 }
@@ -278,7 +137,7 @@ export default function Triage() {
               <Clock className="h-4 w-4 text-teal-600" />
               {triage.clinician
                 ? `Your clinician: ${triage.clinician.fullName} (${professionalTypeLabel(triage.clinician.type)})`
-                : "We're assigning a clinician to you"}
+                : 'Our clinicians on call have been alerted'}
             </div>
             {triage.isFree && (
               <p className="text-sm text-ink-600">
@@ -304,7 +163,8 @@ export default function Triage() {
             )}
             {!triage.clinician && (
               <p className="text-sm text-ink-600">
-                This page updates by itself. You can message your clinician as soon as one is assigned.
+                The first clinician free to take your triage will pick it up. This page updates by itself, and you can
+                message your clinician as soon as one has taken it.
               </p>
             )}
           </Card>
@@ -320,7 +180,7 @@ export default function Triage() {
             disabledReason={
               triage.status === 'COMPLETED'
                 ? 'This triage chat is closed.'
-                : 'You can message your clinician as soon as one is assigned.'
+                : 'You can message your clinician as soon as one has taken your triage.'
             }
           />
         )}
